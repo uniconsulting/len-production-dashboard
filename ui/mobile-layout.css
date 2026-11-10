@@ -193,7 +193,6 @@
   }
   .financial-actions button,
   .sales-toggle,
-  .return-assumptions summary,
   footer button,
   .text-btn {
     min-height: 44px;
@@ -240,21 +239,6 @@
   }
   .sales-toggle[aria-expanded='false'] + .sales-route {
     display: none;
-  }
-  .return-assumptions summary {
-    align-content: center;
-  }
-  .payback-plan .chart-ranges button {
-    min-height: 44px;
-    font-size: 14px;
-    padding-inline: 12px;
-  }
-  .payback-plan .check-pair {
-    flex-wrap: wrap;
-    gap: 12px 20px;
-  }
-  .monthly-thresholds dl {
-    gap: 12px;
   }
   .mobile-nav {
     display: grid;

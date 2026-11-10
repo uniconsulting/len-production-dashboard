@@ -3,11 +3,12 @@ import { mobileBatchList } from './ui/mobile-overview.js?v=5';
 import { renderLead, bindLead } from './ui/reference-lead.js?v=11';
 import { renderStrip } from './ui/reference-strip.js?v=11';
 import { renderAnalytics } from './ui/reference-analytics.js?v=11';
+import { renderFAQ, bindFAQ, rememberFAQ } from './ui/investor-faq.js?v=12';
 import { icon } from './ui/icons.js';
 import { chart, bindChart } from './ui/chart.js?v=5';
 import { renderPickers, bindPickers } from './ui/pickers.js?v=5';
 import { bindBento } from './ui/bento.js?v=11';
-import { renderProduction, renderInvestors, bindDetails } from './ui/details.js?v=11';
+import { renderProduction, renderInvestors, bindDetails } from './ui/details.js?v=12';
 
 const app = document.querySelector('#app'),
   dialog = document.querySelector('#dialog');
@@ -26,7 +27,6 @@ const defaults = {
   month: 13,
   span: 24,
   role: 'lead',
-  target: 36,
 };
 const allowed = {
   view: Object.keys(labels),
@@ -35,7 +35,6 @@ const allowed = {
   policy: ['balance', 'retained'],
   span: [12, 24, 60],
   role: ['lead', 'pair', 'one', 'uk'],
-  target: [24, 36],
 };
 const fmt = new Map();
 let historyExpanded = false;
@@ -75,7 +74,7 @@ const current = () =>
 function urlFor(next) {
   const url = new URL(location.href);
   url.search = '';
-  url.hash = '';
+  if (next.view !== 'overview' || url.hash !== '#faq') url.hash = '';
   for (const k of Object.keys(defaults))
     if (next[k] !== defaults[k]) url.searchParams.set(k, String(next[k]));
   return url;
@@ -187,10 +186,11 @@ function overview() {
     <details class="ref-history" ${historyExpanded ? 'open' : ''}>
       <summary>Выручка и прибыль по месяцам ${icon('chevron', 18)}</summary>${chart(ctx())}
     </details>
-    ${batches}${returnPlan(cs)}
+    ${batches}${renderFAQ(cardContext)}
   </div>`;
 }
 function render() {
+  rememberFAQ(app);
   document.title = labels[state.view] + ' · ЛËН Производство';
   const brand =
     '<img class="brand-lockup" src="./assets/brand/len.svg?v=5" alt="ЛËН"><img class="brand-sign" src="./assets/brand/len-mark.svg" alt="">';
@@ -245,61 +245,13 @@ function render() {
   bindPickers(app, { ...ctx(), months: current().months });
   if (state.view === 'overview') {
     bindLead(slot, ctx());
+    bindFAQ(slot, ctx());
     bindChart(slot, ctx());
     const history = slot.querySelector('.ref-history');
     history.addEventListener('toggle', () => {
       if (history.isConnected) historyExpanded = history.open;
     });
   } else bindDetails(slot, ctx());
-}
-function returnPlan(cs) {
-  const target = cs.thresholds?.[state.target];
-  const choices = [24, 36]
-    .map(
-      (months) =>
-        `<button type="button" data-action="target" data-val="${months}" aria-pressed="${state.target === months}">${months} мес.</button>`,
-    )
-    .join('');
-  const head = `<div class="card-head return-heading"><h2>Возврат 1 млн ₽</h2>
-    <div class="chart-ranges" role="group" aria-label="Целевой срок возврата">${choices}</div></div>`;
-  if (!target)
-    return `<section class="bento-card payback-plan">${head}<p>При выбранном портфеле цель недостижима.</p></section>`;
-
-  // The reverse model is evaluated at full monthly demand (December 2027).
-  const planned = cs.months[12].avgCheck;
-  const threshold = target.avgCheck;
-  const scale = Math.max(threshold, planned, 1) * 1.12;
-  const minimumPosition = (100 * threshold) / scale;
-  const planPosition = (100 * planned) / scale;
-  const gap = planned - threshold;
-  const sameMinimum =
-    cs.thresholds[24] &&
-    cs.thresholds[36] &&
-    Math.abs(cs.thresholds[24].revenue - cs.thresholds[36].revenue) < 0.01;
-  const bindingReserve =
-    state.scenario === 'growth' && sameMinimum
-      ? `<p class="table-note">Для обоих сроков минимальный чек задаёт резерв ${money(model.meta.startupReserve)} на конец декабря 2026 года.</p>`
-      : '';
-  return `<section class="bento-card payback-plan">${head}
-    <div class="payback-layout">
-      <div class="price-comparison">
-        <dl class="check-pair">
-          <div><dt>Минимальный чек</dt><dd class="goal-num">${money(threshold)}</dd></div>
-          <div><dt>Плановый чек</dt><dd>${money(planned)}</dd></div>
-        </dl>
-        <div class="price-track" style="--minimum:${minimumPosition}%;--planned:${planPosition}%" aria-hidden="true"><i></i><b></b></div>
-        <p class="price-difference">${gap >= 0 ? 'Запас по чеку' : 'До минимального чека'} <strong>${money(Math.abs(Math.round(gap)))}</strong></p>
-      </div>
-      <div class="monthly-thresholds">
-        <h3>Декабрь 2027 · ${n(cs.months[12].orders, 1)} ${batchNoun(cs.months[12].orders)}</h3>
-        <dl><div><dt>Выручка от</dt><dd>${money(Math.ceil(target.revenue))}</dd></div>
-          <div><dt>Маржинальный доход от</dt><dd>${money(Math.ceil(target.margin))}</dd></div></dl>
-      </div>
-    </div>
-    ${bindingReserve}
-    <details class="return-assumptions"><summary>Условия для инвестора с долей 33%</summary>
-      <p>Доля инвестора — 33%. Раз в квартал распределяется до 50% накопленного остатка прибыли. Чеки указаны без НДС. Порог предполагает единый коэффициент к ценам партий с запуска. Выручка и маржинальный доход показаны для объёма декабря 2027 года.</p></details>
-    </section>`;
 }
 function salesDetails(trigger) {
   const r = current().months[state.month - 1];
@@ -543,9 +495,6 @@ app.addEventListener('click', (e) => {
     openFilters(dialog, openDialog, { ...ctx(), months: current().months }, allowed.portfolio, b);
   if (b.dataset.action === 'sales') salesDetails(b);
   if (b.dataset.action === 'pnl') profitDetails(b);
-  if (b.dataset.action === 'target') {
-    update({ target: Number(b.dataset.val) }, { focus: '[data-val="' + b.dataset.val + '"]' });
-  }
   if (b.dataset.action === 'terms') openDialog('Условия расчёта', termContent(), b);
   if (b.dataset.action === 'share') shareDialog(b);
   if (b.dataset.action === 'period-table') periodTable(b);
@@ -561,6 +510,9 @@ try {
   if (!res.ok) throw Error();
   model = await res.json();
   render();
+  if (location.hash === '#faq') {
+    requestAnimationFrame(() => document.querySelector('#faq')?.scrollIntoView({ block: 'start' }));
+  }
 } catch (err) {
   app.innerHTML =
     '<div class="initial"><h1>Не удалось открыть расчёт</h1><p>Обновите страницу, чтобы загрузить данные модели.</p><button class="primary-action" onclick="location.reload()">Повторить загрузку</button></div>';

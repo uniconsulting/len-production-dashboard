@@ -1,0 +1,169 @@
+.faq-card {
+  scroll-margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  gap: 24px clamp(20px, 3.5vw, 48px);
+  container: investor-faq / inline-size;
+}
+
+.faq-head {
+  flex: 1 1 15rem;
+  min-width: 0;
+}
+
+.faq-context {
+  max-width: 54ch;
+  margin-top: 8px;
+  color: var(--ui-muted);
+  font: var(--ui-caption);
+}
+
+.faq-controls {
+  display: grid;
+  gap: 10px 12px;
+  min-width: 0;
+}
+
+.faq-controls {
+  flex: 1.8 1 31rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.faq-controls label {
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  min-width: 0;
+  color: var(--ui-muted);
+  font: 400 13px/1.4 var(--ui-font);
+}
+
+.faq-controls select {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: var(--ui-radius-control);
+  background-color: var(--ui-quiet);
+  color: var(--ui-ink);
+  font: 550 14px/1.4 var(--ui-font);
+  text-overflow: ellipsis;
+}
+
+.faq-controls select.ui-select {
+  padding-inline-end: 34px;
+}
+
+.faq-controls select:focus-visible {
+  outline: 2px solid var(--ui-focus);
+  outline-offset: 2px;
+}
+
+.faq-list {
+  flex: 0 0 100%;
+  min-width: 0;
+}
+
+.faq-item {
+  border-top: 1px solid var(--ui-border);
+}
+
+.faq-item > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 57px;
+  margin: 0;
+  padding: 14px 1px;
+  color: var(--ui-ink);
+  font: 550 clamp(16px, 1.25vw, 19px) / 1.38 var(--ui-font);
+  letter-spacing: -0.025em;
+  list-style: none;
+  cursor: pointer;
+}
+
+.faq-item > summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-item > summary svg {
+  flex: none;
+  color: var(--ui-muted);
+  transition: transform var(--ui-fast) var(--ui-ease);
+}
+
+.faq-item[open] > summary svg {
+  transform: rotate(180deg);
+  color: var(--ui-accent-ink);
+}
+
+.faq-item > summary:focus-visible {
+  outline: none;
+  color: var(--ui-accent-ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.24em;
+}
+
+.faq-answer {
+  max-width: 74ch;
+  padding: 0 0 21px;
+  color: var(--ui-muted);
+  font: 400 15px/1.6 var(--ui-font);
+  overflow-wrap: break-word;
+  font-variant-numeric: tabular-nums;
+}
+
+.faq-answer > * + * {
+  margin-top: 9px;
+}
+
+.faq-answer strong {
+  color: var(--ui-ink);
+}
+
+@media (hover: hover) {
+  .faq-item > summary:hover,
+  .faq-item > summary:hover svg {
+    color: var(--ui-accent-ink);
+  }
+}
+
+@container investor-faq (max-width: 48rem) {
+  .faq-head,
+  .faq-controls {
+    flex-basis: 100%;
+  }
+}
+
+@container investor-faq (max-width: 31rem) {
+  .faq-controls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .faq-item > summary {
+    min-height: 57px;
+    gap: 12px;
+    padding-block: 15px;
+    font-size: 16px;
+  }
+
+  .faq-controls select {
+    font-size: 16px;
+  }
+
+  .faq-answer {
+    font-size: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .faq-item > summary svg {
+    transition: none;
+  }
+}

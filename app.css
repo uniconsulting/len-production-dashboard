@@ -666,8 +666,7 @@ footer button:hover,
 .sales-origin {
   min-width: 0;
 }
-.volume-reading,
-.check-pair dd {
+.volume-reading {
   font: var(--ui-kpi);
   color: var(--ui-ink);
   letter-spacing: -0.055em;
@@ -681,8 +680,7 @@ footer button:hover,
   letter-spacing: -0.025em;
 }
 .volume-caption,
-.sales-assumptions,
-.return-assumptions p {
+.sales-assumptions {
   font: var(--ui-caption);
   color: var(--ui-muted);
 }
@@ -737,123 +735,6 @@ footer button:hover,
   font-size: 13px;
   line-height: 1.5;
 }
-.payback-plan {
-  --card-surface: #f6f8f4;
-}
-.payback-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1.18fr) minmax(0, 0.95fr);
-  align-items: center;
-  gap: clamp(24px, 4.5vw, 86px);
-  margin: 24px 0 16px;
-}
-.check-pair {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px clamp(24px, 3vw, 56px);
-}
-.check-pair dt {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font: var(--ui-caption);
-  color: var(--ui-muted);
-}
-.check-pair dt::before {
-  content: '';
-  width: 2px;
-  height: 12px;
-  border-radius: 2px;
-  background: var(--ui-ink);
-}
-.check-pair > div + div dt::before {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--ui-accent-ink);
-}
-.check-pair dd {
-  font-size: clamp(24px, 2.45vw, 40px);
-  margin-top: 5px;
-  white-space: nowrap;
-}
-.check-pair > div + div dd {
-  color: var(--ui-accent-ink);
-}
-.price-track {
-  position: relative;
-  height: 12px;
-  margin: 13px 0 8px;
-  background: repeating-linear-gradient(90deg, #c4d0c7 0 2px, transparent 2px 6px);
-}
-.price-track i {
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: var(--planned);
-  background: repeating-linear-gradient(90deg, #66b78d 0 2px, transparent 2px 6px);
-}
-.price-track b {
-  position: absolute;
-  top: -3px;
-  bottom: -3px;
-  width: 2px;
-  left: var(--minimum);
-  background: var(--ui-ink);
-  border-radius: 2px;
-}
-.price-difference {
-  font: var(--ui-caption);
-  color: var(--ui-muted);
-}
-.price-difference strong {
-  margin-left: 5px;
-  color: var(--ui-ink);
-  font-weight: 600;
-  white-space: nowrap;
-}
-.monthly-thresholds {
-  display: grid;
-  gap: 12px;
-  min-width: 0;
-}
-.monthly-thresholds h3 {
-  font: var(--ui-number);
-  letter-spacing: -0.03em;
-}
-.monthly-thresholds dl {
-  display: grid;
-  gap: 10px;
-}
-.monthly-thresholds dl > div {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 15px;
-}
-.monthly-thresholds dt {
-  font: var(--ui-caption);
-  color: var(--ui-muted);
-}
-.monthly-thresholds dd {
-  white-space: nowrap;
-  font: var(--ui-number);
-}
-.return-assumptions {
-  font: var(--ui-caption);
-}
-.return-assumptions summary {
-  cursor: pointer;
-  color: var(--ui-accent-ink);
-  width: fit-content;
-}
-.return-assumptions summary:focus-visible {
-  outline: 2px solid var(--ui-focus);
-  outline-offset: 3px;
-}
-.return-assumptions p {
-  max-width: 72ch;
-  margin-top: 7px;
-}
 @media (max-width: 1080px) {
   .sales-plan {
     grid-template-columns: minmax(185px, 0.75fr) minmax(0, 1.5fr);
@@ -863,13 +744,9 @@ footer button:hover,
     grid-template-columns: minmax(0, 1.8fr) minmax(28px, 0.65fr) 3ch;
     gap: 8px;
   }
-  .payback-layout {
-    gap: 24px;
-  }
 }
 @media (max-width: 760px) {
-  .sales-plan,
-  .payback-layout {
+  .sales-plan {
     grid-template-columns: minmax(0, 1fr);
     gap: 18px;
   }
@@ -891,28 +768,7 @@ footer button:hover,
   .funnel {
     gap: 10px;
   }
-  .payback-layout {
-    margin: 17px 0;
-  }
-  .check-pair {
-    justify-content: space-between;
-    gap: 10px;
-  }
-  .check-pair dd {
-    font-size: clamp(22px, 5.5vw, 32px);
-  }
-  .check-pair dt {
-    font-size: 13px;
-  }
-  .monthly-thresholds {
-    gap: 8px;
-  }
-  .monthly-thresholds dl {
-    gap: 6px;
-  }
-  .return-heading {
-    flex-wrap: wrap;
-  }
+
 }
 footer {
   display: flex;
