@@ -126,7 +126,8 @@ function cashFlow(cs, current, vat) {
     })
     .join('');
   const [amount, suffix] = moneyParts(current.opCashFlow);
-  return `<section class="ra-card ref-flow" aria-labelledby="ra-flow-heading">
+  return `<section class="ra-card bento-contour ref-flow" aria-labelledby="ra-flow-heading">
+      <span class="bento-paint" aria-hidden="true"></span>
     <div class="ra-flow-head"><div><h2 id="ra-flow-heading">Денежный поток</h2>
       <p class="ra-sub">От операций <strong>${current.opCashFlow > 0 ? '+' : ''}${amount} ${suffix}</strong></p></div>
       <div class="ra-key"><span>Поступления</span><span>Платежи</span></div></div>
@@ -160,7 +161,8 @@ function costBreakdown(cs, current) {
       ${sparkline(months, key)}<span class="ra-cost-value" title="${rubles(current[key])}">${value} <small>${unit}</small></span></li>`;
     })
     .join('');
-  return `<section class="ra-card ref-cost" aria-labelledby="ra-cost-heading">
+  return `<section class="ra-card bento-contour ref-cost" aria-labelledby="ra-cost-heading">
+      <span class="bento-paint" aria-hidden="true"></span>
     <h2 id="ra-cost-heading">Операционные затраты</h2><p class="ra-stat" title="${rubles(total)}">${amount} <small>${suffix}</small></p>
     <div class="ra-cost-split" aria-hidden="true">${split}</div>
     <ul class="ra-cost-list" aria-label="Расходы за выбранный месяц и динамика с ${monthName(months[0])} по ${monthName(current)}">${rows}</ul>
@@ -196,7 +198,8 @@ function orderBars(cs, current) {
       )}</details>`;
     })
     .join('');
-  return `<section class="ra-card ref-orders" aria-labelledby="ra-orders-heading">
+  return `<section class="ra-card bento-contour ref-orders" aria-labelledby="ra-orders-heading">
+      <span class="bento-paint" aria-hidden="true"></span>
     <h2 id="ra-orders-heading">Партии</h2><p class="ra-stat">${decimal.format(current.orders)}</p>
     <p class="ra-sub">${change}</p>
     <div class="ra-order-plot" aria-label="План продаж, партий за месяц"><div class="ra-bar-axis" aria-hidden="true">${ticks}</div>${columns}</div>

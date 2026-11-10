@@ -9,26 +9,13 @@
   --detail-inset: rgb(255 255 255 / 9%);
   position: relative;
   isolation: isolate;
-  overflow: hidden;
   gap: 0;
   min-width: 0;
   padding: clamp(21px, 2vw, 29px);
-  border-radius: 28px;
-  background: var(--p-base);
+  border-radius: 0;
   color: var(--ui-ink);
 }
-.detail-view .production-panel::before,
-.detail-view .production-panel::after {
-  content: '';
-  display: block;
-  position: absolute;
-  z-index: -1;
-  pointer-events: none;
-  clip-path: none;
-}
-.detail-view .production-panel::before {
-  inset: 0;
-  border-radius: inherit;
+.production-panel > .bento-paint {
   background: linear-gradient(
     180deg,
     var(--p-top),
@@ -37,7 +24,9 @@
     var(--p-bottom)
   );
 }
-.detail-view .production-panel::after {
+.production-panel > .bento-paint::before {
+  position: absolute;
+  content: '';
   inset: 13% 7% -3%;
   border-radius: 25%;
   background: var(--p-core);
@@ -294,7 +283,6 @@
 @media (max-width: 700px) {
   .detail-view .production-panel {
     padding: 23px 20px 12px;
-    border-radius: 25px;
   }
   .production-panel .d-resource-head h2 {
     font-size: 20px;

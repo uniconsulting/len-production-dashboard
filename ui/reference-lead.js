@@ -99,9 +99,11 @@ function streamChart(model, rows, selected) {
       <span class="ref-month-label ref-month-date">${formatMonth(row.date)}</span></button>`;
     })
     .join('');
-  return `<div class="ref-stream" role="group" aria-label="Выручка без НДС по группам принтеров. Стрелки влево и вправо выбирают месяц.">
-    <svg viewBox="0 0 1000 200" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-      ${paths}</svg><div class="ref-months">${buttons}</div></div>`;
+  return {
+    ink: `<svg class="ref-stream-ink" viewBox="0 0 1000 200" preserveAspectRatio="none" aria-hidden="true" focusable="false">${paths}</svg>`,
+    controls: `<div class="ref-stream" role="group" aria-label="Выручка без НДС по группам принтеров. Стрелки влево и вправо выбирают месяц.">
+      <div class="ref-months">${buttons}</div></div>`,
+  };
 }
 
 function revenueCard(model, cs, r) {
@@ -121,11 +123,14 @@ function revenueCard(model, cs, r) {
   const legend = groups
     .map((g) => `<span><i style="--swatch:${g.color}"></i>${g.label}</span>`)
     .join('');
-  return `<section class="ref-lead ref-revenue" aria-label="Выручка за месяц">
+  const { ink, controls } = streamChart(model, period, r.m);
+  return `<section class="ref-lead ref-revenue bento-contour" data-bento-profile="rounded" aria-label="Выручка за месяц">
+    <div class="bento-paint" aria-hidden="true">${ink}</div>
+    <div class="ref-revenue-summary">
     <div class="ref-lead-head"><h2><button class="ref-title-link" type="button" data-action="pnl" aria-label="Выручка за месяц. Открыть расчёт прибыли">Выручка за месяц</button></h2><div class="ref-legend" aria-label="Группы принтеров">${legend}</div></div>
     <div class="ref-reading"><p class="ref-dots">${number.format(Math.round(r.revenue))}<small>₽</small></p><div class="ref-change">${trend}</div></div>
     <p class="ref-tax">Без НДС · Средний чек ${number.format(Math.round(r.avgCheck))} ₽</p>
-    ${streamChart(model, period, r.m)}</section>`;
+    </div>${controls}</section>`;
 }
 
 function occupancyCard(model, r, state) {
@@ -153,7 +158,9 @@ function occupancyCard(model, r, state) {
     .join('');
   const hours = `${number.format(Math.round(used))} из ${number.format(Math.round(capacity))} ч`;
   const params = new URLSearchParams({ ...state, view: 'production' });
-  return `<section class="ref-lead ref-occupancy"><div class="ref-lead-head"><h2>Загрузка парка</h2>
+  return `<section class="ref-lead ref-occupancy bento-contour" data-bento-profile="rounded">
+    <div class="bento-paint" aria-hidden="true"></div>
+    <div class="ref-lead-head"><h2>Загрузка парка</h2>
     <a class="ref-fleet-link" data-view="production" href="?${params}" aria-label="Подробная загрузка принтеров" title="Загрузка ${model.printers.length} принтеров"><span class="ref-fleet-count">${model.printers.length} машин</span> ${icon('arrowUpRight', 12)}</a></div>
     <div class="ref-gauge" role="img" aria-label="Занято ${formatRate(utilization)} доступного фонда парка. ${hours}.">
       <svg viewBox="-150 -145 300 155" aria-hidden="true"><g stroke-width="3.2" stroke-linecap="round">${ticks}</g></svg>

@@ -24,6 +24,22 @@
   background: var(--card-surface, var(--ui-surface));
   clip-path: var(--bento-clip, inset(0 round var(--ui-card-radius)));
 }
+/* Layered cards paint their base, glow and edge-to-edge artwork inside one
+   contour. Controls and tooltips remain outside this clipped layer. */
+.bento-contour {
+  position: relative;
+  isolation: isolate;
+}
+.bento-contour > .bento-paint {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  clip-path: var(--bento-clip, inset(0 round var(--ui-radius-panel)));
+}
+.bento-card.bento-contour::before {
+  content: none;
+}
 .bento-card .ui-inset {
   border-radius: max(0px, calc(var(--ui-card-radius) - var(--ui-card-inset)));
 }

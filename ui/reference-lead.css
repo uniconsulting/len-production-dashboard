@@ -4,22 +4,22 @@
   --lead-pad: clamp(19px, 2vw, 29px);
   position: relative;
   isolation: isolate;
-  overflow: hidden;
   container-type: inline-size;
   min-width: 0;
   height: clamp(334px, 27vw, 416px);
   margin: 0;
   padding: var(--lead-pad);
   border: 0;
-  border-radius: 28px;
-  background: linear-gradient(180deg, #686a75, #383941 36%, #383941 74%, #61616c);
   color: #fff;
   font: 400 14px/1.35 var(--ui-font);
 }
 
-.ref-lead::before {
+.ref-lead > .bento-paint {
+  background: linear-gradient(180deg, #686a75, #383941 36%, #383941 74%, #61616c);
+}
+
+.ref-lead > .bento-paint::before {
   position: absolute;
-  z-index: -1;
   inset: 16% 10% -6%;
   border-radius: 90px;
   background: #07070a;
@@ -29,15 +29,31 @@
 }
 
 .ref-revenue {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template: auto minmax(112px, 1fr) / minmax(0, 1fr);
+  padding: 0;
+}
+
+/* Share the chart row with the controls, but clip only its ink to the card. */
+.ref-revenue > .bento-paint {
+  grid-area: 1 / 1 / -1 / -1;
+  position: relative;
+  display: grid;
+  grid-template-rows: subgrid;
+  min-height: 0;
   background: linear-gradient(180deg, #777889 0%, #474854 30%, #343540 71%, #717386 100%);
 }
 
-.ref-revenue::before {
+.ref-revenue > .bento-paint::before {
   inset: 13% 9% -5%;
   background: #0d0d16;
   filter: blur(48px);
+}
+
+.ref-revenue-summary {
+  grid-area: 1 / 1;
+  container-type: inline-size;
+  padding: var(--lead-pad) var(--lead-pad) 15px;
 }
 
 .ref-lead-head,
@@ -150,14 +166,18 @@
   font-size: 12px;
 }
 
-.ref-stream {
+.ref-stream,
+.ref-stream-ink {
+  grid-area: 2 / 1;
   position: relative;
-  flex: 1 1 auto;
-  min-height: 112px;
-  margin: 15px calc(-1 * var(--lead-pad)) calc(-1 * var(--lead-pad));
 }
 
-.ref-stream > svg,
+.ref-stream-ink {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
 .ref-months {
   position: absolute;
   inset: 0;
@@ -423,7 +443,6 @@
   .ref-lead {
     --lead-pad: 22px;
     height: 338px;
-    border-radius: 24px;
   }
   .ref-lead h2 {
     font-size: 19px;
@@ -431,8 +450,8 @@
   .ref-reading {
     margin-top: 16px;
   }
-  .ref-stream {
-    margin-top: 18px;
+  .ref-revenue-summary {
+    padding-bottom: 18px;
   }
   .ref-occupancy {
     height: 330px;

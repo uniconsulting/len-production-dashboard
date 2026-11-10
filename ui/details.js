@@ -207,7 +207,8 @@ function machineCapacity(ctx, m, warning) {
   const detail = `<dl class="d-breakdown">${groupRows}</dl>
     <p class="d-note">Свободно по парку ${hours(Math.max(0, capacity - m.printHours))}. В самой загруженной группе «${groups[busiest].label}» остаётся ${hours(Math.max(0, m.groupCapacity[busiest] - m.groupHours[busiest]))}.</p>
     ${route}${compact.matches ? warning : ''}`;
-  return `<section class="bento-card d-card d-resource d-util-card production-panel production-fleet">
+  return `<section class="bento-card d-card d-resource d-util-card production-panel bento-contour production-fleet" data-bento-profile="rounded">
+      <span class="bento-paint" aria-hidden="true"></span>
     <div class="d-resource-head"><h2>Загрузка парка</h2><span>${ctx.model.printers.length} машин</span></div>
     <div class="production-metric"><strong>${percent(ratio(m.printHours, capacity))}</strong></div>
     <p class="production-subvalue">${hours(m.printHours)} печати из ${hours(capacity)} доступных</p>
@@ -250,7 +251,8 @@ function operatorCapacity(ctx, m) {
       <div><dt>Обходы</dt><dd>${hours(m.roundsHours)}</dd></div><div><dt>Всего на площадке</dt><dd>${hours(m.operatorHours + m.roundsHours)}</dd></div></dl>
       <p class="d-note">Отделка требуется трети принятых партий. Обходы покрываются резервом рабочего графика.</p>
       ${m.ownerSupportHours > 0 ? `<p class="d-note">Работа основателей по партиям оценена в ${rub(m.ownerSupportCost)} за месяц по ставке ${rub(m.ownerSupportCost / m.ownerSupportHours, 2)} за час. Её стоимость учтена в экономической прибыли.</p>` : ''}`;
-  return `<section class="bento-card d-card d-resource d-work-card production-panel production-work">
+  return `<section class="bento-card d-card d-resource d-work-card production-panel bento-contour production-work" data-bento-profile="rounded">
+      <span class="bento-paint" aria-hidden="true"></span>
     <div class="d-resource-head"><h2>${people}</h2><span>${founders ? 'Двое в офисе' : 'График 6/1'}</span></div>
     <div class="production-metric"><strong>${hours(booked)}</strong></div>
     <p class="production-subvalue">по заказам из ${hours(available)} доступных</p>

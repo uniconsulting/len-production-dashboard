@@ -64,6 +64,7 @@ function bentoPath(width, height, profile) {
   return clip;
 }
 
+const surfaceSelector = '.bento-card, .bento-contour';
 let binding;
 
 export function bindBento(root) {
@@ -97,7 +98,7 @@ export function bindBento(root) {
         attached.delete(card);
       }
     }
-    for (const card of host.querySelectorAll('.bento-card')) {
+    for (const card of host.querySelectorAll(surfaceSelector)) {
       if (!attached.has(card)) {
         attached.add(card);
         resize.observe(card);
@@ -111,7 +112,7 @@ export function bindBento(root) {
   // also when reduced motion is enabled. CSS applies it to the decorative surface only.
   const includesCard = (node) =>
     node.nodeType === Node.ELEMENT_NODE &&
-    (node.matches('.bento-card') || node.querySelector('.bento-card'));
+    (node.matches(surfaceSelector) || node.querySelector(surfaceSelector));
   const mutations = new MutationObserver((records) => {
     if (
       records.some(

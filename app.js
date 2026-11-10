@@ -1,13 +1,13 @@
 import { filterSummary, openFilters } from './ui/mobile-filters.js?v=5';
 import { mobileBatchList } from './ui/mobile-overview.js?v=5';
-import { renderLead, bindLead } from './ui/reference-lead.js?v=9';
-import { renderStrip } from './ui/reference-strip.js?v=8';
-import { renderAnalytics } from './ui/reference-analytics.js?v=8';
+import { renderLead, bindLead } from './ui/reference-lead.js?v=11';
+import { renderStrip } from './ui/reference-strip.js?v=11';
+import { renderAnalytics } from './ui/reference-analytics.js?v=11';
 import { icon } from './ui/icons.js';
 import { chart, bindChart } from './ui/chart.js?v=5';
 import { renderPickers, bindPickers } from './ui/pickers.js?v=5';
-import { bindBento } from './ui/bento.js?v=5';
-import { renderProduction, renderInvestors, bindDetails } from './ui/details.js?v=8';
+import { bindBento } from './ui/bento.js?v=11';
+import { renderProduction, renderInvestors, bindDetails } from './ui/details.js?v=11';
 
 const app = document.querySelector('#app'),
   dialog = document.querySelector('#dialog');

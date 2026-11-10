@@ -1,7 +1,6 @@
 /* FinanceBento uses 8/4, 3/3/3/3 and 5/4/3 on the dashboard’s light canvas. */
 .ref-board {
   --ref-gap: 14px;
-  --ref-radius: 28px;
   display: grid;
   gap: var(--ref-gap);
   background: transparent;
@@ -45,13 +44,14 @@
   gap: 9px;
   min-height: 170px;
   padding: 18px clamp(15px, 1.65vw, 25px) 19px;
-  border-radius: var(--ref-radius);
-  background: var(--ui-surface);
   color: var(--ui-ink);
   container-type: inline-size;
   font-variant-numeric: tabular-nums;
 }
-.strip-result {
+.ref-mini > .bento-paint {
+  background: var(--ui-surface);
+}
+.strip-result > .bento-paint {
   background:
     radial-gradient(ellipse at 58% 85%, #174331 8%, #24523d 40%, transparent 91%),
     linear-gradient(159deg, #b2e8c8 0%, #71bb93 27%, #286b49 68%, #66a47c 100%);
@@ -231,7 +231,6 @@
 @media (max-width: 700px) {
   .ref-board {
     --ref-gap: 12px;
-    --ref-radius: 24px;
   }
   .ref-mini h2 :is(button, a) {
     min-height: 42px;

@@ -34,16 +34,19 @@ export function renderStrip({ model, r, state, n, pct, money, urlFor }) {
   };
   const marginShare = r.revenue > 0 ? r.margin / r.revenue : 0;
   return `<div class="ref-strip">
-    <section class="ref-mini strip-result">
+    <section class="ref-mini bento-contour strip-result">
+      <span class="bento-paint" aria-hidden="true"></span>
       ${opener('Чистая прибыль', 'pnl', 'Чистая прибыль: открыть расчёт')}
       <div>${amount(r.profit)}<p class="strip-caption">${r.revenue > 0 ? pct(r.profit / r.revenue, 1) + ' от выручки' : 'Выручки в этом месяце нет'}</p></div>
     </section>
-    <section class="ref-mini strip-margin">
+    <section class="ref-mini bento-contour strip-margin">
+      <span class="bento-paint" aria-hidden="true"></span>
       ${opener('Маржинальный доход', 'pnl', 'Маржинальный доход: открыть расчёт')}
       <div>${amount(r.margin)}<p class="strip-caption">${r.revenue > 0 ? pct(marginShare, 1) + ' от выручки' : 'Выручки в этом месяце нет'}</p></div>
       ${ticks(marginShare)}
     </section>
-    <section class="ref-mini strip-sales">
+    <section class="ref-mini bento-contour strip-sales">
+      <span class="bento-paint" aria-hidden="true"></span>
       ${opener('План продаж', 'sales', 'План продаж: заказы, средний чек и конверсия')}
       <dl>${[
         ['stack', 'Запросы', r.theoryLeads],
@@ -53,7 +56,8 @@ export function renderStrip({ model, r, state, n, pct, money, urlFor }) {
         .map(([i, label, val]) => `<div><dt><i>${icon(i, 13)}</i>${label}</dt><dd>${n(val)}</dd></div>`)
         .join('')}</dl>
     </section>
-    <section class="ref-mini strip-goals">
+    <section class="ref-mini bento-contour strip-goals">
+      <span class="bento-paint" aria-hidden="true"></span>
       <h2><a data-view="investors" href="${urlFor({ ...state, view: 'investors' })}" aria-label="Возврат вкладов: открыть выплаты участникам">Возврат вкладов${icon('arrowUpRight', 14)}</a></h2>
       ${recovery(1, 'Инвестор · 1 млн ₽')}${recovery(2, 'Пара · 500 тыс. ₽')}
     </section>
