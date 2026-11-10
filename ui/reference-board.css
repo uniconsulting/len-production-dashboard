@@ -98,6 +98,17 @@
 .ref-board .strip-result h2 button:hover {
   color: #fff;
 }
+/* Keep this title an inline action visually, even when focus and hover coincide. */
+.ref-board .strip-result h2 button:is(:hover, :focus) {
+  outline: none;
+  box-shadow: none;
+  border: 0;
+}
+.ref-board .strip-result h2 button:focus-visible {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.3em;
+}
 .strip-result .strip-amount {
   color: white;
   font-size: clamp(37px, 21cqw, 60px);
