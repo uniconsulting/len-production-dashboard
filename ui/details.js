@@ -15,7 +15,12 @@ const esc = (s) =>
     /[&<>"']/g,
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
   );
-const compact = (value) => (value >= 1000000 ? num(value / 1000000, 2) + ' млн ₽' : rub(value));
+const axisLabel = (value) =>
+  value >= 1000000
+    ? num(value / 1000000, 1) + ' млн'
+    : value >= 1000
+      ? num(value / 1000) + ' тыс.'
+      : num(value);
 const dateFormat = new Intl.DateTimeFormat('ru-RU', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 const shortDateFormat = new Intl.DateTimeFormat('ru-RU', {
   month: 'short',
@@ -126,69 +131,46 @@ function productionTop(ctx, m) {
   const people = m.m <= 6 ? 'Работа основателей' : 'Работа оператора';
   const total = sum(m.groupCapacity);
   const groupLines = groups
-    .map((g, i) => {
-      const load = ratio(m.groupHours[i], m.groupCapacity[i]);
-      return (
-        '<div class="d-group-load"><div><span>' +
-        g.full +
-        '</span><strong>' +
-        percent(load) +
-        '</strong></div>' +
-        meter(load, 'd-tone-' + i) +
-        '<small>' +
-        hours(m.groupHours[i]) +
-        ' из ' +
-        hours(m.groupCapacity[i]) +
-        '</small></div>'
-      );
+    .map((group, index) => {
+      const load = ratio(m.groupHours[index], m.groupCapacity[index]);
+      return `<li class="d-group-load">
+      <div><span>${group.full}</span><strong>${percent(load)}</strong></div>
+      ${meter(load, 'd-tone-' + index)}
+      <small>${hours(m.groupHours[index])} из ${hours(m.groupCapacity[index])}</small>
+    </li>`;
     })
     .join('');
   const breakdown = [
     'Параметры и запуск через ЛËН',
     'Столы и неудачные построения',
     'Приёмка и упаковка',
-    'Заказанная постобработка',
+    'Дополнительная постобработка',
   ];
-  return (
-    '<div class="d-top-grid"><section class="bento-card d-card"><h2>Загрузка парка</h2>' +
-    '<div class="d-measure">' +
-    percent(ratio(m.printHours, total)) +
-    '</div><div class="d-submetric">' +
-    hours(m.printHours) +
-    ' печати из ' +
-    hours(total) +
-    ' доступных</div>' +
-    '<div class="d-group-grid">' +
-    groupLines +
-    '</div></section>' +
-    '<section class="bento-card d-card"><h2>' +
-    people +
-    '</h2><div class="d-measure">' +
-    hours(m.operatorHours + m.roundsHours) +
-    '</div>' +
-    '<div class="d-submetric">' +
-    hours(m.operatorHours) +
-    ' на заказы и ' +
-    hours(m.roundsHours) +
-    ' на обходы</div>' +
-    '<div class="d-labor-pair"><span>Свободно для заказов</span><strong>' +
-    hours(Math.max(0, m.laborCapacity - m.operatorHours)) +
-    '</strong></div>' +
-    '<div class="d-labor-pair"><span>Подготовка у подрядчика</span><strong>' +
-    hours(m.externalHours) +
-    '</strong></div>' +
-    '<details class="d-disclosure"><summary>Из чего складываются часы' +
-    chevron +
-    '</summary>' +
-    '<dl class="d-breakdown">' +
-    breakdown
-      .map((label, i) => '<div><dt>' + label + '</dt><dd>' + hours(m.labor[i]) + '</dd></div>')
-      .join('') +
-    '</dl>' +
-    '<p class="d-note">Отделка принята для трети партий каждого профиля. Нормативы проверяются хронометражем. Фонд на заказы — ' +
-    hours(m.laborCapacity) +
-    '.</p></details></section></div>'
-  );
+  const workingRows = [
+    ['Работа по заказам', m.operatorHours],
+    ['Обходы фермы', m.roundsHours],
+    ['Резерв времени на заказы', Math.max(0, m.laborCapacity - m.operatorHours)],
+    ['Подготовка у подрядчика', m.externalHours],
+  ]
+    .map(([name, value]) => `<div><dt>${name}</dt><dd>${hours(value)}</dd></div>`)
+    .join('');
+  return `<div class="d-top-grid">
+    <section class="bento-card d-card d-util-card">
+      <h2>Загрузка парка</h2>
+      <div class="d-reading"><strong class="d-measure">${percent(ratio(m.printHours, total))}</strong>
+        <span>${num(m.printHours, 1)} из ${num(total, 1)} машино-часов</span></div>
+      <ul class="d-group-grid">${groupLines}</ul>
+    </section>
+    <section class="bento-card d-card d-work-card">
+      <h2>${people}</h2>
+      <div class="d-reading"><strong class="d-measure">${hours(m.operatorHours + m.roundsHours)}</strong>
+        <span>на площадке за месяц</span></div>
+      <dl class="d-working-rows">${workingRows}</dl>
+      <details class="d-disclosure"><summary>Операции по заказам ${chevron}</summary>
+        <dl class="d-breakdown">${breakdown.map((name, i) => `<div><dt>${name}</dt><dd>${hours(m.labor[i])}</dd></div>`).join('')}</dl>
+        <p class="d-note">Норматив отделки учитывает треть партий. Фонд на заказы — ${hours(m.laborCapacity)}. Время операций уточняется по замерам.</p>
+      </details>
+    </section></div>`;
 }
 
 function fleetRows(ctx, m, machines) {
@@ -308,7 +290,7 @@ function batches(ctx, m) {
       .map(
         (p, i) =>
           '<tr><th scope="row">' +
-          esc(p.name) +
+          esc(p.id) +
           '</th><td class="is-number">' +
           num(m.profileOrders[i], 1) +
           '</td><td class="is-number d-batch-extra">' +
@@ -331,7 +313,7 @@ export function renderProduction(ctx) {
   const highLoad = shortMonth ? ratio(shortMonth.groupHours[2], shortMonth.groupCapacity[2]) : 0;
   const warning =
     highLoad >= 0.9
-      ? '<aside class="d-cap-note"><span class="d-warning-mark" aria-hidden="true">!</span><div><strong>Резерв серийной группы в феврале</strong><p>За 28 дней двум принтерам потребуется ' +
+      ? '<aside class="d-cap-note"><div><strong>Резерв серийной группы в феврале</strong><p>За 28 дней двум принтерам потребуется ' +
         hours(shortMonth.groupHours[2]) +
         ' из ' +
         hours(shortMonth.groupCapacity[2]) +
@@ -350,81 +332,56 @@ export function renderProduction(ctx) {
 }
 
 function personSelect(role) {
-  return (
-    '<section class="bento-card d-card d-settings"><div class="d-setting"><h2>Участник</h2>' +
-    segments(
+  return `<div class="d-head d-person-head">
+    <h2>Участник</h2>
+    ${segments(
       'Выбрать участника',
       roles.map((p) => choice('role', p.key, p.title, p.key === role.key)),
       'd-role-filter',
-    ) +
-    '</div></section>'
-  );
+    )}
+  </div>`;
 }
 function policySelect(ctx, c) {
-  const state = ctx.state;
+  const { state } = ctx;
   const profit = c.months.reduce((total, row) => total + row.profit, ctx.model.meta.openingProfit);
   const distributed = c.policies[state.policy].totalGross;
-  return (
-    '<section class="bento-card d-card d-policy"><div class="d-head"><h2>Порядок распределения</h2>' +
-    segments(
+  return `<section class="bento-card d-card d-policy"><h2>Распределение прибыли</h2>
+    ${segments(
       'Регламент распределения прибыли',
       Object.entries(policies).map(([key, v]) => choice('policy', key, v.label, state.policy === key)),
       'd-policy-filter',
-    ) +
-    '</div><p>' +
-    policies[state.policy].detail +
-    '</p><div class="d-policy-result"><strong>' +
-    percent(ratio(distributed, profit)) +
-    '</strong><span>чистой прибыли будет распределено за 5 лет</span></div><p class="d-note">Выплаты рассчитываются после погашения модельного займа ' +
-    rub(ctx.model.meta.loanAmount) +
-    ' и пополнения денежных резервов. Даты зависят от решения участников.</p></section>'
-  );
+    )}
+    <div class="d-policy-result"><strong>${percent(ratio(distributed, profit))}</strong><span>чистой прибыли распределено за 5 лет</span></div>
+    <p>${policies[state.policy].detail}</p>
+    <details class="d-disclosure"><summary>Условия выплаты ${chevron}</summary>
+      <p class="d-note">Выплаты рассчитаны после погашения займа ${rub(ctx.model.meta.loanAmount)} и пополнения резервов. Даты требуют решения участников.</p>
+    </details>
+  </section>`;
 }
 function personKPIs(ctx, c, m, role) {
-  const policy = ctx.state.policy,
-    profile = c.policies[policy],
-    data = m.policies[policy];
+  const profile = c.policies[ctx.state.policy],
+    data = m.policies[ctx.state.policy];
   const recovery = profile.payback[role.idx],
-    selectedSum = data.cumPayouts[role.idx] * role.fraction;
-  const ret = profile.irr[role.idx],
     hasCash = role.cash > 0;
-  const payback = hasCash ? (recovery ? 'М' + recovery : '> 60 мес.') : percent(role.share);
-  const limit =
-    hasCash && recovery
+  const payback = hasCash ? (recovery ? num(recovery) + ' мес.' : 'Свыше 5 лет') : percent(role.share);
+  const paybackDetail = hasCash
+    ? recovery
       ? monthName(c.months[recovery - 1].date)
-      : hasCash
-        ? 'Взнос не покрыт в горизонте модели'
-        : 'Доля в производственном ООО';
-  return (
-    '<div class="d-person-kpis"><section class="bento-card d-card ui-grain-fill d-person-hero"><h3>' +
-    (hasCash ? 'Возврат взноса' : 'Доля управляющей компании') +
-    '</h3><div class="d-measure">' +
-    payback +
-    '</div><p>' +
-    limit +
-    '</p></section>' +
-    '<section class="bento-card d-card"><h3>Чистые выплаты к М' +
-    m.m +
-    '</h3><div class="d-measure">' +
-    compact(selectedSum) +
-    '</div><p>За выбранный месяц ' +
-    rub(data.payouts[role.idx] * role.fraction) +
-    '</p></section>' +
-    '<section class="bento-card d-card"><h3>' +
-    (hasCash ? 'Годовая IRR за 5 лет' : 'Чистые выплаты за 5 лет') +
-    '</h3><div class="d-measure">' +
-    (hasCash
-      ? Number.isFinite(ret)
-        ? percent(ret)
-        : 'Не определена'
-      : compact(profile.totalPayouts[role.idx] * role.fraction)) +
-    '</div><p>' +
-    (hasCash
-      ? 'Денежный вклад ' + rub(role.cash) + ' · доля ' + percent(role.share)
-      : 'Стартовый денежный вклад 0 ₽. Работа УК учитывается отдельно.') +
-    '</p></section></div>'
-  );
+      : 'Взнос не покрыт в горизонте модели'
+    : 'Доля в производственном ООО';
+  const rate = profile.irr[role.idx];
+  return `<section class="bento-card d-card d-person-summary">${personSelect(role)}
+    <div class="d-person-kpis">
+      <div class="d-person-cell d-person-hero"><h3>${hasCash ? 'Возврат взноса' : 'Доля управляющей компании'}</h3>
+        <strong class="d-measure">${payback}</strong><p>${paybackDetail}</p></div>
+      <div class="d-person-cell"><h3>Выплачено с запуска</h3><strong class="d-measure">${rub(data.cumPayouts[role.idx] * role.fraction)}</strong>
+        <p>В выбранном месяце ${rub(data.payouts[role.idx] * role.fraction)}</p></div>
+      <div class="d-person-cell"><h3>${hasCash ? 'Годовая IRR за 5 лет' : 'Чистые выплаты за 5 лет'}</h3>
+        <strong class="d-measure">${hasCash ? (Number.isFinite(rate) ? percent(rate) : 'Не определена') : rub(profile.totalPayouts[role.idx] * role.fraction)}</strong>
+        <p>${hasCash ? 'Вклад ' + rub(role.cash) + ' · доля ' + percent(role.share) : 'Денежный вклад 0 ₽. Работа УК учитывается отдельно.'}</p></div>
+    </div></section>`;
 }
+
 function payoutChart(c, m, role, policy) {
   const cash = role.cash,
     values = [0, ...c.months.map((row) => row.policies[policy].cumPayouts[role.idx] * role.fraction)];
@@ -474,7 +431,7 @@ function payoutChart(c, m, role, policy) {
     (cash > 0 ? '<span><i class="d-dashed"></i>Денежный вклад</span>' : '') +
     '</div></div>' +
     '<div class="d-chart-wrap"><div class="d-chart-axis" aria-hidden="true"><span>' +
-    compact(top) +
+    axisLabel(top) +
     '</span><span>0 ₽</span></div><div class="d-chart-touch" tabindex="0" role="slider" aria-label="Месяц графика выплат" aria-valuemin="1" aria-valuemax="60" aria-valuenow="' +
     m.m +
     '" aria-valuetext="' +
@@ -509,7 +466,11 @@ function payoutChart(c, m, role, policy) {
     '" cy="' +
     xy(y(pt)) +
     '" r="4" class="d-chart-point"/></svg></div></div>' +
-    '<div class="d-chart-labels" aria-hidden="true"><span>Старт</span><span>М12</span><span>М24</span><span>М36</span><span>М48</span><span>М60</span></div><div class="d-chart-caption"><span>' +
+    '<div class="d-chart-labels" aria-hidden="true"><span>' +
+    c.months[0].date.slice(0, 4) +
+    '</span>' +
+    [12, 24, 36, 48, 60].map((k) => '<span>' + c.months[k - 1].date.slice(0, 4) + '</span>').join('') +
+    '</div><div class="d-chart-caption"><span>' +
     monthName(m.date) +
     '</span><b>' +
     rub(pt) +
@@ -556,9 +517,7 @@ function payoutLedger(c, m, role, policy) {
             (row) =>
               '<div><dt>' +
               monthName(row.date) +
-              ' <small>М' +
-              row.m +
-              '</small></dt><dd>' +
+              '</dt><dd>' +
               rub(row.policies[policy].payouts[role.idx] * role.fraction) +
               '</dd></div>',
           )
@@ -582,18 +541,13 @@ function payoutLedger(c, m, role, policy) {
   );
 }
 export function renderInvestors(ctx) {
-  const { c, m } = select(ctx),
-    role = roles.find((r) => r.key === ctx.state.role) ?? roles[0],
-    policy = ctx.state.policy;
-  return (
-    '<div class="detail-view" data-detail-view="investors">' +
-    personSelect(role) +
-    personKPIs(ctx, c, m, role) +
-    policySelect(ctx, c) +
-    payoutChart(c, m, role, policy) +
-    payoutLedger(c, m, role, policy) +
-    '</div>'
-  );
+  const { c, m } = select(ctx);
+  const role = roles.find((item) => item.key === ctx.state.role) ?? roles[0];
+  const policy = ctx.state.policy;
+  return `<div class="detail-view" data-detail-view="investors">
+    ${personKPIs(ctx, c, m, role)}
+    <div class="d-invest-grid">${payoutChart(c, m, role, policy)}${policySelect(ctx, c)}</div>
+    ${payoutLedger(c, m, role, policy)}</div>`;
 }
 
 const bound = new WeakSet();

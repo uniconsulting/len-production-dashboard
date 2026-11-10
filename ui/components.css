@@ -1,63 +1,32 @@
-@import url('./tokens.css');
+@import url('./tokens.css?v=2');
 
+/* Mieru BentoSurface applies its measured contour to the paint layer only.
+   The card remains rectangular for accessible focus and floating content. */
 .bento-card {
-  --ui-card-radius: var(--ui-radius);
-  --ui-card-inset: clamp(16px, 1.65vw, 26px);
+  --ui-card-radius: var(--ui-radius-panel);
+  --ui-card-inset: clamp(20px, 1.9vw, 34px);
   box-sizing: border-box;
+  position: relative;
+  isolation: isolate;
   min-width: 0;
   padding: var(--ui-card-inset);
-  border: 1px solid var(--ui-border);
+  border: 0;
   border-radius: var(--ui-card-radius);
-  background: var(--ui-surface);
+  background: transparent;
   color: var(--ui-ink);
 }
-
-/* The radius of an inset surface follows R2 = R1 - inset - border. */
-.bento-card .ui-inset {
-  border-radius: max(0px, calc(var(--ui-card-radius) - var(--ui-card-inset) - 1px));
-}
-
-.ui-grain-fill {
-  isolation: isolate;
-  position: relative;
-  background: var(--ui-card-fill, var(--ui-fill-graphite));
-}
-.ui-grain-fill::before,
-.ui-grain-fill::after {
+.bento-card::before {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-}
-.ui-grain-fill::before {
   z-index: -1;
-  background: var(--ui-grain) repeat 0 0 / 200px 200px;
-  opacity: 0.12;
-  mix-blend-mode: soft-light;
+  pointer-events: none;
+  background: var(--card-surface, var(--ui-surface));
+  clip-path: var(--bento-clip, inset(0 round var(--ui-card-radius)));
 }
-.ui-grain-fill::after {
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 22%);
+.bento-card .ui-inset {
+  border-radius: max(0px, calc(var(--ui-card-radius) - var(--ui-card-inset)));
 }
-@supports (mask-composite: exclude) {
-  .ui-grain-fill::after {
-    padding: 1px;
-    background: linear-gradient(
-      135deg,
-      rgb(255 255 255 / 62%),
-      transparent 36%,
-      rgb(255 255 255 / 12%) 58%,
-      rgb(255 255 255 / 40%) 80%,
-      transparent
-    );
-    mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    mask-composite: exclude;
-    box-shadow: none;
-  }
-}
-
 .ui-table-frame {
   position: relative;
   max-width: 100%;
@@ -113,7 +82,7 @@
   gap: 2px;
   max-width: 100%;
   padding: 3px;
-  border: 1px solid var(--ui-border);
+  border: 0;
   border-radius: var(--ui-radius-control);
   background: var(--ui-surface-hover);
 }
@@ -195,9 +164,8 @@ select.ui-select {
   }
 }
 @media (forced-colors: active) {
-  .ui-grain-fill::before,
-  .ui-grain-fill::after {
-    display: none;
+  .bento-card {
+    outline: 1px solid CanvasText;
   }
   .ui-segmented > button:is([aria-pressed='true'], [aria-selected='true'], .is-active) {
     outline: 2px solid Highlight;

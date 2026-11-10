@@ -1,0 +1,203 @@
+.len-picker-trigger,
+.len-picker-panel button {
+  box-sizing: border-box;
+  appearance: none;
+  border: 0;
+  font-family: var(--ui-font);
+  color: var(--ui-ink);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.len-picker-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 12px;
+  min-height: 40px;
+  min-width: 0;
+  border-radius: var(--ui-radius-control, 12px);
+  background: var(--ui-surface);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  transition: background-color var(--ui-fast) var(--ui-ease);
+}
+
+.len-picker-trigger > span:not(.len-picker-chevron) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.len-picker-trigger > .glyph {
+  color: var(--ui-muted);
+}
+.len-picker-chevron {
+  display: inline-flex;
+  flex: none;
+  color: var(--ui-muted);
+  transition: transform var(--ui-fast) var(--ui-ease);
+}
+.len-picker-trigger[aria-expanded='true'] {
+  background: var(--ui-surface-hover);
+}
+.len-picker-trigger[aria-expanded='true'] .len-picker-chevron {
+  transform: rotate(180deg);
+}
+.len-picker-trigger:focus:not(:focus-visible),
+.len-picker-panel button:focus:not(:focus-visible) {
+  outline: none;
+}
+.len-picker-trigger:focus-visible,
+.len-picker-panel button:focus-visible {
+  outline: 2px solid var(--ui-accent-ink);
+  outline-offset: -2px;
+}
+
+/* Mieru SelectMenu geometry: one surface in a fixed portal, 8px inset;
+   the inner option radius follows the parent radius minus its inset. */
+.len-picker-panel {
+  --picker-radius: var(--ui-radius-menu, 18px);
+  --picker-inset: 8px;
+  position: fixed;
+  z-index: 50;
+  box-sizing: border-box;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: var(--picker-inset);
+  border: 0;
+  border-radius: var(--picker-radius);
+  background: var(--ui-surface);
+  color: var(--ui-ink);
+  box-shadow:
+    0 10px 32px rgb(17 26 22 / 16%),
+    0 2px 6px rgb(17 26 22 / 5%);
+}
+.len-plan-panel {
+  display: grid;
+  gap: 3px;
+}
+.len-plan-option {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 9px 12px;
+  min-height: 44px;
+  border-radius: calc(var(--picker-radius) - var(--picker-inset));
+  background: transparent;
+  text-align: left;
+}
+.len-plan-option span {
+  display: grid;
+  gap: 2px;
+}
+.len-plan-option strong {
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 20px;
+}
+.len-plan-option small {
+  color: var(--ui-muted);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+}
+.len-plan-option[aria-selected='true'],
+.len-month-cell[aria-pressed='true'] {
+  color: var(--ui-ink);
+  background: var(--ui-accent-soft, #e5f6ec);
+}
+.len-plan-option[aria-selected='true'] .glyph {
+  color: var(--ui-accent-ink);
+}
+
+.len-year-nav {
+  display: grid;
+  grid-template-columns: 38px 1fr 38px;
+  align-items: center;
+  margin-bottom: 5px;
+  text-align: center;
+  font-size: 16px;
+  line-height: 24px;
+}
+.len-year-nav strong {
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.len-year-step,
+.len-month-cell {
+  display: grid;
+  place-items: center;
+  border-radius: calc(var(--picker-radius) - var(--picker-inset));
+  background: transparent;
+}
+.len-year-step {
+  min-height: 36px;
+}
+.len-year-step.previous .glyph {
+  transform: rotate(180deg);
+}
+.len-month-grid {
+  display: grid;
+  gap: 3px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.len-month-cell {
+  min-height: 39px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 550;
+}
+.len-month-cell[aria-pressed='true'] {
+  font-weight: 750;
+}
+.len-picker-panel button:disabled {
+  color: var(--ui-muted);
+  opacity: 0.42;
+  cursor: default;
+}
+@media (hover: hover) {
+  .len-picker-trigger:hover,
+  .len-picker-panel button:not([aria-selected='true'], [aria-pressed='true'], :disabled):hover {
+    background: var(--ui-surface-hover);
+  }
+}
+@media (pointer: coarse) {
+  .len-picker-trigger,
+  .len-month-cell,
+  .len-year-step {
+    min-height: 44px;
+  }
+}
+@media (max-width: 490px) {
+  .toolbar-right:has(.len-picker-trigger) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    width: 100%;
+    gap: 7px;
+  }
+  .len-picker-trigger {
+    justify-content: space-between;
+    gap: 5px;
+    padding-inline: 9px;
+  }
+  .len-picker-trigger > span:not(.len-picker-chevron) {
+    margin-right: auto;
+  }
+}
+@media (max-width: 355px) {
+  .toolbar-right:has(.len-picker-trigger) {
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
+  }
+  .len-picker-trigger {
+    gap: 3px;
+    padding-inline: 6px;
+    font-size: 13px;
+  }
+  .len-picker-trigger > .glyph {
+    display: none;
+  }
+}

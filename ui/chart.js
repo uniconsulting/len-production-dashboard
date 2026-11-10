@@ -81,7 +81,7 @@ export function chart(ctx) {
       )
       .join('') +
     '</div></div>';
-  const range = '<span>' + xDate(points[0].date) + ' — ' + xDate(points.at(-1).date) + '</span>';
+
   const legend =
     '<div class="chart-labels"><span><i class="legend-bar"></i>Выручка</span><span><i class="legend-line"></i>Чистая прибыль</span></div>';
   return (
@@ -89,7 +89,6 @@ export function chart(ctx) {
     header +
     '<div class="chart-sub">' +
     legend +
-    range +
     '</div><div class="plot"><div class="plot-y">' +
     ticks.map((t) => '<span style="top:' + (y(t) / H) * 100 + '%">' + short(t) + '</span>').join('') +
     '</div><div class="chart-area" tabindex="0" role="slider" aria-label="Месяц на графике. Стрелки меняют выбранный месяц" aria-valuemin="' +

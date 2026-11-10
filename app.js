@@ -1,6 +1,8 @@
 import { icon } from './ui/icons.js';
-import { chart, bindChart } from './ui/chart.js';
-import { renderProduction, renderInvestors, bindDetails } from './ui/details.js';
+import { chart, bindChart } from './ui/chart.js?v=2';
+import { renderPickers, bindPickers } from './ui/pickers.js?v=2';
+import { bindBento } from './ui/bento.js?v=2';
+import { renderProduction, renderInvestors, bindDetails } from './ui/details.js?v=2';
 
 const app = document.querySelector('#app'),
   dialog = document.querySelector('#dialog');
@@ -111,49 +113,6 @@ function nav(mobile = false) {
     '</nav>'
   );
 }
-function scenarioControl() {
-  return (
-    '<label class="select-control pace-control">' +
-    icon('settings', 16) +
-    '<select id="scenario" aria-label="Темп роста и цены"><option value="base" ' +
-    (state.scenario === 'base' ? 'selected' : '') +
-    '>Рабочий план</option><option value="fast" ' +
-    (state.scenario === 'fast' ? 'selected' : '') +
-    '>Ускоренный план</option></select>' +
-    icon('chevron', 13) +
-    '</label>'
-  );
-}
-function periodControl() {
-  const groups = new Map();
-  for (const r of current().months) {
-    const year = r.date.slice(0, 4);
-    if (!groups.has(year)) groups.set(year, []);
-    groups
-      .get(year)
-      .push(
-        '<option value="' +
-          r.m +
-          '" ' +
-          (state.month === r.m ? 'selected' : '') +
-          '>' +
-          fullMonth(r.date) +
-          '</option>',
-      );
-  }
-  return (
-    '<label class="select-control period-control">' +
-    icon('calendar', 16) +
-    '<select id="month" aria-label="Расчётный месяц">' +
-    Array.from(
-      groups,
-      ([y, opts]) => '<optgroup label="' + y + '">' + opts.join('') + '</optgroup>',
-    ).join('') +
-    '</select>' +
-    icon('chevron', 13) +
-    '</label>'
-  );
-}
 function toolbar() {
   return (
     '<div class="toolbar"><div class="portfolio"><span id="portfolio-label">Партий в месяц</span><div class="ui-segmented" role="group" aria-labelledby="portfolio-label">' +
@@ -170,8 +129,7 @@ function toolbar() {
       )
       .join('') +
     '</div></div><div class="toolbar-right">' +
-    scenarioControl() +
-    periodControl() +
+    renderPickers({ state, months: current().months, fullMonth, icon }) +
     '</div></div>'
   );
 }
@@ -183,7 +141,7 @@ function spark(series, type) {
     h = 29;
   const coords = values.map(
     (v, i) =>
-      ((i * w) / (values.length - 1)).toFixed(1) +
+      ((i * w) / Math.max(1, values.length - 1)).toFixed(1) +
       ',' +
       (h - 2 - ((v - lo) / (hi - lo)) * (h - 5)).toFixed(1),
   );
@@ -197,36 +155,38 @@ function overview() {
   const cs = current(),
     r = cs.months[state.month - 1],
     capacity = r.groupCapacity.reduce((a, b) => a + b, 0);
-  const ks = cs.months.slice(0, Math.max(2, state.month));
+  const ks = cs.months.slice(0, state.month);
+  const pnlButton =
+    '<button type="button" class="signal-open" data-action="pnl" aria-label="Открыть расчёт прибыли за месяц">' +
+    icon('arrowUpRight', 18) +
+    '</button>';
   const hero =
-    '<section class="hero-card bento-card ui-grain-fill"><div class="hero-photo"></div><div class="hero-scrim"></div><div class="hero-inner"><div class="hero-caption"><span class="hero-mark">' +
-    icon('chart', 17) +
-    '</span>Выручка за месяц</div><h2 class="hero-num">' +
+    '<section class="hero-card bento-card"><div class="depth-fill" aria-hidden="true"><i class="depth-field"></i><i class="depth-core"></i><i class="depth-grain"></i></div><div class="signal-head"><h2>Выручка за месяц</h2>' +
+    pnlButton +
+    '</div><div class="hero-reading"><p class="hero-num"><span>' +
     n(r.revenue) +
-    ' <small>₽</small></h2><span class="hero-tax">без НДС</span><div class="hero-bottom"><div><span>Принятые партии</span><strong>' +
+    '</span><small>₽</small></p><span class="hero-tax">без НДС</span></div><dl class="hero-bottom"><div><dt>Принятые партии</dt><dd>' +
     n(r.orders, 1) +
-    '</strong></div><div><span>Средний чек</span><strong>' +
+    '</dd></div><div><dt>Средний чек</dt><dd>' +
     money(r.avgCheck) +
-    '</strong></div></div></div></section>';
-  const metric = (type, label, expl, cls) =>
-    '<article class="bento-card mini-card ' +
+    '</dd></div></dl></section>';
+  const metric = (type, label, explanation, cls) =>
+    '<section class="bento-card mini-card ' +
     cls +
-    '"><button data-action="pnl" class="metric-link" aria-label="Открыть расчёт прибыли за месяц">' +
-    icon('arrowUpRight', 14) +
-    '</button><div class="metric-label"><span class="mini-dot"></span>' +
+    '"><div class="signal-head"><h2>' +
     label +
-    '</div><strong>' +
-    money(r[type]) +
-    '</strong><div class="mini-foot"><span>' +
-    expl +
-    '</span>' +
+    '</h2>' +
+    pnlButton +
+    '</div><p class="metric-value">' +
+    n(r[type]) +
+    ' <small>₽</small></p><p class="metric-caption">' +
+    explanation +
+    '</p><div class="metric-history">' +
     spark(ks, type) +
-    '</div></article>';
+    '</div></section>';
   const kpis =
-    '<div class="kpi-column">' +
-    metric('margin', 'Маржинальный доход', pct(r.margin / r.revenue) + ' выручки', 'margin-card') +
-    metric('profit', 'Чистая прибыль', 'После налога на прибыль', 'profit-card') +
-    '</div>';
+    metric('margin', 'Маржинальный доход', pct(r.margin / r.revenue) + ' от выручки', 'margin-card') +
+    metric('profit', 'Чистая прибыль', pct(r.profit / r.revenue) + ' от выручки', 'profit-card');
   const fleet =
     '<section class="bento-card fleet-preview"><div class="card-head"><h2>Загрузка парка</h2><a href="' +
     urlFor({ ...state, view: 'production' }) +
@@ -257,7 +217,7 @@ function overview() {
       .join('') +
     '</div></section>';
   const batches =
-    '<section class="bento-card batch-card"><div class="card-head"><h2>Экономика партии</h2><span class="fine-label">По профилям заказов</span></div><div class="ui-table-frame"><table class="ui-table"><thead><tr><th scope="col">Профиль</th><th scope="col" class="is-number">Партий</th><th scope="col" class="is-number">Чек, ₽</th><th scope="col" class="is-number">Затраты¹, ₽</th><th scope="col" class="is-number">Маржа, ₽</th><th scope="col" class="is-number">Печать, ч</th><th scope="col" class="is-number">Труд, ч</th></tr></thead><tbody>' +
+    '<section class="bento-card batch-card"><div class="card-head"><h2>Экономика партии</h2></div><div class="ui-table-frame"><table class="ui-table"><thead><tr><th scope="col">Профиль</th><th scope="col" class="is-number">Партий</th><th scope="col" class="is-number">Чек, ₽</th><th scope="col" class="is-number">Затраты¹, ₽</th><th scope="col" class="is-number">Маржа, ₽</th><th scope="col" class="is-number">Печать, ч</th><th scope="col" class="is-number">Труд, ч</th></tr></thead><tbody>' +
     model.profiles
       .map((p, i) => {
         const q = r.profileOrders[i],
@@ -266,9 +226,7 @@ function overview() {
         return (
           '<tr><th scope="row"><button class="row-more" data-profile="' +
           i +
-          '"><i>' +
-          p.id +
-          '</i><span>' +
+          '"><span>' +
           p.name +
           '</span>' +
           icon('right', 12) +
@@ -303,27 +261,35 @@ function overview() {
   );
 }
 function render() {
-  const cs = current(),
-    r = cs.months[state.month - 1];
   document.title = labels[state.view] + ' · ЛËН Производство';
+  const brand =
+    '<img class="brand-lockup" src="./assets/brand/len.svg?v=2" alt="ЛËН"><img class="brand-sign" src="./assets/brand/len-mark.svg" alt=""><span class="brand-name">Производство</span>';
+  const share =
+    '<button type="button" class="share-btn" data-action="share" aria-label="Поделиться сценарием">' +
+    icon('share', 18) +
+    '<span>Поделиться</span></button>';
   const header =
-    '<header class="topbar"><div class="crumb"><span>ЛËН Производство</span>' +
-    icon('right', 12) +
-    '<b>Финансовая модель</b></div><div class="mobile-brand"><img src="./assets/brand/len.svg" alt="">ЛËН <span>Производство</span></div><button class="share-btn" data-action="share" aria-label="Поделиться сценарием">' +
-    icon('share', 16) +
-    '<span>Поделиться</span></button></header>';
+    '<header class="mobile-header"><a data-view="overview" href="./" class="mobile-brand" aria-label="ЛËН Производство, обзор">' +
+    brand +
+    '</a>' +
+    share +
+    '</header>';
   const sidebar =
-    '<aside class="sidebar"><a class="brand" href="./" data-view="overview"><img src="./assets/brand/len.svg" alt=""><span><strong>ЛËН</strong><small>Производство</small></span></a>' +
+    '<aside class="sidebar"><a class="brand" href="./" data-view="overview" aria-label="ЛËН Производство, обзор">' +
+    brand +
+    '</a>' +
     nav() +
     '<div class="side-bottom"><button data-action="terms">' +
-    icon('info', 18) +
-    'Условия расчёта</button><div class="side-context"><i></i><span>Ульяновск<br><small>Производственная ферма</small></span></div></div></aside>';
+    icon('info', 19) +
+    '<span>Условия расчёта</span></button><div class="side-context">' +
+    icon('pin', 15) +
+    'Ульяновск</div></div></aside>';
   const titles =
-    '<div class="page-title"><div><p class="kicker"><i></i>Декабрь 2026 — ноябрь 2031</p><h1 tabindex="-1" id="title">' +
+    '<div class="page-title"><h1 tabindex="-1" id="title">' +
     pageTitles[state.view] +
-    '</h1></div><span class="month-index">М' +
-    String(state.month).padStart(2, '0') +
-    ' <span>/ 60</span></span></div>';
+    '</h1>' +
+    share +
+    '</div>';
   const content =
     state.view === 'overview'
       ? overview()
@@ -345,45 +311,54 @@ function render() {
   if (typeof content === 'string') slot.innerHTML = content;
   else slot.append(content);
   app.setAttribute('aria-busy', 'false');
+  bindBento(app);
+  bindPickers(app, { ...ctx(), months: current().months });
   if (state.view === 'overview') bindChart(slot, ctx());
   else bindDetails(slot, ctx());
 }
+function renderReturnPlan(target, { state, n, money }) {
+  const switcher = [24, 36]
+    .map(
+      (v) =>
+        '<button type="button" data-action="target" data-val="' +
+        v +
+        '" aria-pressed="' +
+        (v === state.target) +
+        '">' +
+        v +
+        ' мес.</button>',
+    )
+    .join('');
+  const figures = target
+    ? '<p class="goal-num">' +
+      money(target.avgCheck) +
+      '</p><p class="metric-caption">Минимальный средний чек без НДС</p><dl class="goal-breakdown"><div><dt>Выручка за месяц</dt><dd>' +
+      n(Math.ceil(target.revenue)) +
+      ' ₽</dd></div><div><dt>Маржинальный доход</dt><dd>' +
+      n(Math.ceil(target.margin)) +
+      ' ₽</dd></div></dl>'
+    : '<p>При выбранном портфеле цель недостижима.</p>';
+  return (
+    '<section class="bento-card sales-card return-card"><div class="card-head"><h2>Возврат 1 млн ₽</h2><div class="chart-ranges" role="group" aria-label="Целевой срок возврата">' +
+    switcher +
+    '</div></div>' +
+    figures +
+    '<p class="table-note">Доля инвестора — 33%. Каждый квартал можно выплатить до половины накопленной прибыли. Нормы рассчитаны для декабря 2027 года.</p></section>'
+  );
+}
 function salesCards(r, cs) {
   const target = cs.thresholds?.[state.target];
-  const reverse = target
-    ? '<div class="goal-num">' +
-      money(target.avgCheck) +
-      '</div><div class="fine-label">Минимальный средний чек партии без НДС</div><p class="goal-detail">При полном портфеле требуется ' +
-      money(Math.ceil(target.revenue)) +
-      ' выручки и ' +
-      money(Math.ceil(target.margin)) +
-      ' маржинального дохода за месяц.</p>'
-    : '<p class="goal-detail">При выбранных условиях порог в пределах модели не достигнут.</p>';
+  const steps = [
+    [r.theoryLeads, 'Запросы'],
+    [r.offers, 'Предложения'],
+    [r.newOrders, 'Новые заказы'],
+  ];
   return (
-    '<div class="sales-grid"><section class="bento-card sales-card"><div class="card-head"><h2>План продаж</h2><span class="fine-label">За выбранный месяц</span></div><div class="sales-steps">' +
-    [
-      [r.theoryLeads, 'Запросы'],
-      [r.offers, 'Предложения'],
-      [r.newOrders, 'Новые заказы'],
-    ]
-      .map(([v, t]) => '<div><strong>' + n(v) + '</strong><span>' + t + '</span></div>')
-      .join('') +
-    '</div><p class="goal-detail">При конверсии квалифицированного запроса в заказ 20% и доле повторных заказов 50%.</p></section><section class="bento-card sales-card"><div class="card-head"><h2>Возврат 1 млн ₽</h2><div class="chart-ranges" role="group" aria-label="Целевой срок возврата">' +
-    [24, 36]
-      .map(
-        (v) =>
-          '<button data-action="target" data-val="' +
-          v +
-          '" aria-pressed="' +
-          (state.target === v) +
-          '">' +
-          v +
-          ' мес.</button>',
-      )
-      .join('') +
-    '</div></div>' +
-    reverse +
-    '<p class="table-note">Для инвестора с долей 33%. Каждый квартал распределяется до 50% накопленного остатка. Нормы полного месяца показаны для М13.</p></section></div>'
+    '<div class="sales-grid"><section class="bento-card sales-card"><h2>План продаж</h2><dl class="sales-steps">' +
+    steps.map(([v, name]) => '<div><dt>' + name + '</dt><dd>' + n(v) + '</dd></div>').join('') +
+    '</dl><p class="goal-detail">Конверсия запроса в заказ — 20%. Половина заказов приходится на повторные продажи.</p></section>' +
+    renderReturnPlan(target, ctx()) +
+    '</div>'
   );
 }
 function profitDetails() {
@@ -432,13 +407,13 @@ function termContent() {
           money(m.loanAmount) +
           ' под ' +
           pct(m.loanApr, 0) +
-          ' годовых до М' +
+          ' годовых на ' +
           m.loanDue +
-          '. Стоимость электромонтажа предстоит подтвердить. Если декабрьские оплаты поступят 31-го числа при равномерных расходах рабочего плана на 30 партий, потребуется ещё около 111 тыс. ₽ для сохранения стартового резерва.',
+          ' месяцев. Стоимость электромонтажа предстоит подтвердить. Если декабрьские оплаты поступят 31-го числа при равномерных расходах рабочего плана на 30 партий, потребуется ещё около 111 тыс. ₽ для сохранения стартового резерва.',
       ],
       [
         'Портфель и цена',
-        '22, 30 и 40 партий — три цели продаж. Рабочий сценарий набирает спрос к М6. Ускоренный достигает его к М3 и предполагает более высокие цены. Цены и выручка отражают отгрузку без НДС. На продажи заложено 20 тыс. ₽/мес. на старте с индексацией. Отдельного штата отдела продаж в модели нет.',
+        '22, 30 и 40 партий — три цели продаж. Рабочий сценарий набирает спрос к шестому месяцу. Ускоренный достигает его к третьему месяцу и предполагает более высокие цены. Цены и выручка отражают отгрузку без НДС. На продажи заложено 20 тыс. ₽/мес. на старте с индексацией. Отдельного штата отдела продаж в модели нет.',
       ],
       [
         'Выпуск и труд',
@@ -581,10 +556,6 @@ app.addEventListener('click', (e) => {
   if (b.dataset.action === 'terms') openDialog('Условия расчёта', termContent());
   if (b.dataset.action === 'share') shareDialog();
   if (b.dataset.action === 'period-table') periodTable();
-});
-app.addEventListener('change', (e) => {
-  if (e.target.id === 'month') update({ month: Number(e.target.value) }, { focus: '#month' });
-  if (e.target.id === 'scenario') update({ scenario: e.target.value }, { focus: '#scenario' });
 });
 addEventListener('popstate', () => {
   if (!model) return;
