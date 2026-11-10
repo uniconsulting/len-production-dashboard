@@ -1,0 +1,244 @@
+/* FinanceBento uses 8/4, 3/3/3/3 and 5/4/3 on the dashboard’s light canvas. */
+.ref-board {
+  --ref-gap: 14px;
+  --ref-radius: 28px;
+  display: grid;
+  gap: var(--ref-gap);
+  background: transparent;
+  color: var(--ui-ink);
+  min-width: 0;
+  container: bento-board / inline-size;
+}
+.ref-lead-pair,
+.ref-strip,
+.ref-analytics-row {
+  display: grid;
+  min-width: 0;
+  gap: var(--ref-gap);
+}
+.ref-lead-pair {
+  grid-template-columns: minmax(0, 2.03fr) minmax(0, 1fr);
+}
+.ref-strip {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.ref-analytics-row {
+  grid-template-columns: minmax(0, 5fr) minmax(0, 4fr) minmax(0, 3fr);
+}
+.ref-lead-pair > *,
+.ref-analytics-row > *,
+.ref-strip > * {
+  min-width: 0;
+}
+.ref-board :is(button, a, [tabindex]):focus-visible {
+  outline: 2px solid var(--ui-focus);
+  outline-offset: 3px;
+}
+.ref-mini {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 9px;
+  min-height: 170px;
+  padding: 18px clamp(15px, 1.65vw, 25px) 19px;
+  border-radius: var(--ref-radius);
+  background: var(--ui-surface);
+  color: var(--ui-ink);
+  container-type: inline-size;
+  font-variant-numeric: tabular-nums;
+}
+.strip-result {
+  background:
+    radial-gradient(ellipse at 58% 60%, #f0faf1 4%, #e4f5e8 44%, transparent 90%),
+    linear-gradient(159deg, #d4ebdb, #bee3c9 68%, #a0d7b7);
+}
+.ref-mini h2 {
+  margin: 0;
+  color: var(--ui-ink);
+  font: 600 15px/1.25 var(--ui-font);
+  -webkit-text-stroke: 0.012em currentColor;
+  letter-spacing: -0.025em;
+}
+.ref-mini h2 :is(button, a) {
+  display: flex;
+  align-items: center;
+  text-align: left;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 4px 0;
+  min-height: 28px;
+  width: 100%;
+  color: inherit;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+}
+.ref-mini h2 :is(button, a):hover {
+  color: var(--ui-accent-ink);
+}
+.ref-mini h2 .glyph {
+  opacity: 0.63;
+}
+
+.strip-amount {
+  color: var(--ui-ink);
+  font: 400 clamp(31px, 18cqw, 54px) / 1.03 var(--ui-font);
+  letter-spacing: -0.065em;
+  white-space: nowrap;
+}
+.strip-amount small {
+  font-size: 0.42em;
+  letter-spacing: -0.035em;
+}
+.strip-result .strip-amount {
+  font-size: clamp(37px, 21cqw, 60px);
+}
+.strip-caption {
+  margin-top: 5px;
+  font: 400 13px/1.36 var(--ui-font);
+  color: var(--ui-muted);
+}
+.strip-result .strip-caption {
+  color: #385544;
+}
+.ref-ticks {
+  display: block;
+  width: 100%;
+  height: 18px;
+}
+.ref-ticks line {
+  stroke: #d4dbd6;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.ref-ticks line.on {
+  stroke: #357859;
+}
+.strip-sales dl {
+  display: grid;
+  margin: 0;
+}
+.strip-sales dl > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+  padding: 5px 0;
+}
+.strip-sales dl > div + div {
+  border-top: 1px solid var(--ui-border);
+}
+.strip-sales dl > div:last-child {
+  padding-bottom: 0;
+}
+.strip-sales dt {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+}
+.strip-sales dd,
+.strip-goal b {
+  font: 600 14px/1.3 var(--ui-font);
+}
+.strip-sales i {
+  display: inline-grid;
+  place-items: center;
+  width: 21px;
+  height: 21px;
+  border-radius: 6px;
+  color: #395345;
+  background: #eff3ef;
+}
+.strip-goal > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 13px;
+}
+.strip-goal .ref-ticks {
+  height: 11px;
+  margin-top: 5px;
+}
+.ref-history {
+  min-width: 0;
+  background: #f7f8f6;
+  border-radius: 20px;
+}
+.ref-history > summary {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 22px;
+  list-style: none;
+  font: 600 15px/1.4 var(--ui-font);
+}
+.ref-history > summary::-webkit-details-marker {
+  display: none;
+}
+.ref-history[open] > summary svg {
+  transform: rotate(180deg);
+}
+.ref-history .chart-card {
+  min-width: 0;
+}
+@container bento-board (max-width: 990px) {
+  .ref-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ref-analytics-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ref-analytics-row > :first-child {
+    grid-column: 1 / -1;
+  }
+}
+@container bento-board (max-width: 825px) {
+  .ref-lead-pair {
+    grid-template-columns: minmax(0, 1.58fr) minmax(0, 1fr);
+  }
+}
+@container bento-board (max-width: 665px) {
+  .ref-lead-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ref-analytics-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 700px) {
+  .ref-board {
+    --ref-gap: 12px;
+    --ref-radius: 24px;
+  }
+  .ref-mini h2 :is(button, a) {
+    min-height: 42px;
+  }
+  .ref-mini {
+    padding: 12px 20px 20px;
+  }
+  .ref-history > summary {
+    padding: 16px 18px;
+  }
+}
+@container bento-board (max-width: 420px) {
+  .ref-strip {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ref-mini {
+    min-height: 148px;
+  }
+  .strip-goals,
+  .strip-sales {
+    min-height: 162px;
+  }
+  .strip-result .strip-amount {
+    font-size: 47px;
+  }
+  .strip-margin .strip-amount {
+    font-size: 40px;
+  }
+}

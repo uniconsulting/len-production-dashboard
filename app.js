@@ -1,11 +1,13 @@
 import { filterSummary, openFilters } from './ui/mobile-filters.js?v=5';
 import { mobileBatchList } from './ui/mobile-overview.js?v=5';
-import { kpiChart } from './ui/kpi-charts.js?v=5';
+import { renderLead, bindLead } from './ui/reference-lead.js?v=7';
+import { renderStrip } from './ui/reference-strip.js?v=7';
+import { renderAnalytics } from './ui/reference-analytics.js?v=7';
 import { icon } from './ui/icons.js';
 import { chart, bindChart } from './ui/chart.js?v=5';
 import { renderPickers, bindPickers } from './ui/pickers.js?v=5';
 import { bindBento } from './ui/bento.js?v=5';
-import { renderProduction, renderInvestors, bindDetails } from './ui/details.js?v=5';
+import { renderProduction, renderInvestors, bindDetails } from './ui/details.js?v=7';
 
 const app = document.querySelector('#app'),
   dialog = document.querySelector('#dialog');
@@ -36,7 +38,7 @@ const allowed = {
   target: [24, 36],
 };
 const fmt = new Map();
-const expandedSections = { trends: false, funnel: false };
+let historyExpanded = false;
 function n(v, d = 0) {
   if (!Number.isFinite(v)) return '—';
   if (!fmt.has(d)) fmt.set(d, new Intl.NumberFormat('ru-RU', { maximumFractionDigits: d }));
@@ -142,71 +144,8 @@ function toolbar() {
 }
 function overview() {
   const cs = current(),
-    r = cs.months[state.month - 1],
-    capacity = r.groupCapacity.reduce((a, b) => a + b, 0);
-  const pnlButton =
-    '<button type="button" class="signal-open" data-action="pnl" aria-label="Открыть расчёт прибыли за месяц">' +
-    icon('arrowUpRight', 18) +
-    '</button>';
-  const hero =
-    '<section class="hero-card bento-card"><div class="depth-fill" aria-hidden="true"><i class="depth-field"></i><i class="depth-core"></i><i class="depth-grain"></i></div><div class="signal-head"><h2>Выручка за месяц</h2>' +
-    pnlButton +
-    '</div><div class="hero-reading"><p class="hero-num"><span>' +
-    n(r.revenue) +
-    '</span><small>₽</small></p><span class="hero-tax">без НДС</span></div><dl class="hero-bottom"><div><dt>Принятые партии</dt><dd>' +
-    n(r.orders, 1) +
-    '</dd></div><div><dt>Средний чек</dt><dd>' +
-    money(r.avgCheck) +
-    '</dd></div></dl></section>';
-  const metric = (type, label, explanation, cls) =>
-    '<section class="bento-card mini-card ' +
-    cls +
-    '"><div class="signal-head"><h2>' +
-    label +
-    '</h2>' +
-    pnlButton +
-    '</div><p class="metric-value">' +
-    n(r[type]) +
-    ' <small>₽</small></p><p class="metric-caption">' +
-    explanation +
-    '</p>' +
-    '<div class="metric-trend" id="trend-' +
-    type +
-    '">' +
-    kpiChart(type, cs.months, state.month) +
-    '</div></section>';
-  const kpis =
-    metric('margin', 'Маржинальный доход', pct(r.margin / r.revenue) + ' от выручки', 'margin-card') +
-    metric('profit', 'Чистая прибыль', pct(r.profit / r.revenue) + ' от выручки', 'profit-card');
-  const fleet =
-    '<section class="bento-card fleet-preview"><div class="card-head"><h2>Загрузка парка</h2><a href="' +
-    urlFor({ ...state, view: 'production' }) +
-    '" data-view="production" class="round-link" aria-label="Подробная загрузка принтеров">' +
-    icon('arrowUpRight', 17) +
-    '</a></div><div class="fleet-big">' +
-    pct(r.printHours / capacity) +
-    '</div><div class="fleet-desc">' +
-    n(r.printHours) +
-    ' из ' +
-    n(capacity) +
-    ' доступных маш.-ч</div><div class="meters">' +
-    ['Сверхгабаритный', 'Инженерные', 'Серийные']
-      .map((name, i) => {
-        const rate = r.groupCapacity[i] ? r.groupHours[i] / r.groupCapacity[i] : 0;
-        return (
-          '<div class="meter-line"><div><span>' +
-          name +
-          '</span><b>' +
-          pct(rate) +
-          '</b></div><div class="meter"><i class="group-' +
-          i +
-          '" style="width:' +
-          Math.min(100, rate * 100) +
-          '%"></i></div></div>'
-        );
-      })
-      .join('') +
-    '</div></section>';
+    r = cs.months[state.month - 1];
+  const cardContext = { ...ctx(), cs, r, urlFor, batchNoun };
   const batches =
     '<section class="bento-card batch-card"><div class="card-head"><h2>Экономика партии</h2></div>' +
     mobileBatchList(ctx(), r) +
@@ -240,23 +179,16 @@ function overview() {
       })
       .join('') +
     '</tbody></table></div><p class="table-note">¹ Переменные затраты на одну принятую партию. Цены без НДС.</p></section>';
-  return (
-    '<div class="overview"><div class="kpi-grid">' +
-    hero +
-    '<div class="financial-cards bento-card">' +
-    kpis +
-    `<div class="financial-actions"><button type="button" data-action="trends" aria-expanded="${expandedSections.trends}" aria-controls="trend-margin trend-profit">` +
-    icon('chart', 16) +
-    'Динамика</button><button type="button" data-action="pnl">Расчёт прибыли ' +
-    icon('arrowUpRight', 16) +
-    '</button></div></div></div><div class="analytics-grid">' +
-    chart(ctx()) +
-    fleet +
-    '</div>' +
-    batches +
-    commercialPlan(r, cs) +
-    '</div>'
-  );
+  return `<div class="overview">
+    <div class="ref-board"><div class="ref-lead-pair">${renderLead(cardContext)}</div>
+      ${renderStrip(cardContext)}
+      <div class="ref-analytics-row">${renderAnalytics(cardContext)}</div>
+    </div>
+    <details class="ref-history" ${historyExpanded ? 'open' : ''}>
+      <summary>Выручка и прибыль по месяцам ${icon('chevron', 18)}</summary>${chart(ctx())}
+    </details>
+    ${batches}${returnPlan(cs)}
+  </div>`;
 }
 function render() {
   document.title = labels[state.view] + ' · ЛËН Производство';
@@ -311,8 +243,14 @@ function render() {
   app.setAttribute('aria-busy', 'false');
   bindBento(app);
   bindPickers(app, { ...ctx(), months: current().months });
-  if (state.view === 'overview') bindChart(slot, ctx());
-  else bindDetails(slot, ctx());
+  if (state.view === 'overview') {
+    bindLead(slot, ctx());
+    bindChart(slot, ctx());
+    const history = slot.querySelector('.ref-history');
+    history.addEventListener('toggle', () => {
+      if (history.isConnected) historyExpanded = history.open;
+    });
+  } else bindDetails(slot, ctx());
 }
 function returnPlan(cs) {
   const target = cs.thresholds?.[state.target];
@@ -363,29 +301,24 @@ function returnPlan(cs) {
       <p>Доля инвестора — 33%. Раз в квартал распределяется до 50% накопленного остатка прибыли. Чеки указаны без НДС. Порог предполагает единый коэффициент к ценам партий с запуска. Выручка и маржинальный доход показаны для объёма декабря 2027 года.</p></details>
     </section>`;
 }
-function commercialPlan(r, cs) {
-  const steps = [
-    ['Квалифицированные запросы', r.theoryLeads],
-    ['Коммерческие предложения', r.offers],
-    ['Новые заказы', r.newOrders],
+function salesDetails(trigger) {
+  const r = current().months[state.month - 1];
+  const rows = [
+    ['Принятые партии', n(r.orders, 1)],
+    ['Средний чек партии без НДС', money(r.avgCheck)],
+    ['Активные клиенты', n(r.activeClients)],
+    ['Квалифицированные запросы', n(r.theoryLeads)],
+    ['Коммерческие предложения', n(r.offers)],
+    ['Новые заказы', n(r.newOrders)],
+    ['Конверсия запросов в заказы', pct(model.meta.conversion, 0)],
+    ['Доля повторных заказов', pct(model.meta.repeatShare, 0)],
   ];
-  const funnel = steps
-    .map(
-      ([label, value]) => `<li>
-    <div class="funnel-reading"><span>${label}</span><strong>${n(value)}</strong></div>
-    <div class="funnel-track" aria-hidden="true"><i style="width:${(100 * value) / Math.max(1, r.theoryLeads)}%"></i></div></li>`,
-    )
-    .join('');
-  return `<div class="commercial-plan">
-    <section class="bento-card sales-plan">
-      <div class="sales-origin"><h2>План продаж</h2><p class="volume-reading">${n(r.orders, 1)} <small>${batchNoun(r.orders)}</small></p>
-        <p class="volume-caption">К отгрузке в этом месяце</p></div>
-      <button class="sales-toggle" type="button" data-action="funnel" aria-expanded="${expandedSections.funnel}" aria-controls="sales-route">Воронка продаж ${icon('chevron', 16)}</button>
-      <div id="sales-route" class="sales-route"><ol class="funnel">${funnel}</ol>
-        <p class="sales-assumptions">В заказ переходят ${pct(model.meta.conversion, 0)} запросов. Доля повторных заказов — ${pct(model.meta.repeatShare, 0)}.</p></div>
-    </section>
-    ${returnPlan(cs)}
-  </div>`;
+  openDialog(
+    'План продаж',
+    `<p class="dialog-lead">${fullMonth(r.date)}</p><div class="dialog-metrics">
+    ${rows.map(([label, value]) => `<div><span>${label}</span><strong>${value}</strong></div>`).join('')}</div>`,
+    trigger,
+  );
 }
 function batchNoun(value) {
   const category = new Intl.PluralRules('ru').select(Math.round(10 * value) / 10);
@@ -563,7 +496,10 @@ dialog.addEventListener('click', async (e) => {
   const go = e.target.closest('[data-goto]');
   if (go) {
     dialog.close();
-    update({ month: Number(go.dataset.goto) }, { focus: '.chart-area' });
+    update(
+      { month: Number(go.dataset.goto) },
+      { focus: historyExpanded ? '.chart-area' : '.ref-history summary' },
+    );
     return;
   }
   if (e.target.closest('[data-copy]')) {
@@ -605,11 +541,7 @@ app.addEventListener('click', (e) => {
   if (b.dataset.profile !== undefined) openProfile(Number(b.dataset.profile), b);
   if (b.dataset.action === 'filters')
     openFilters(dialog, openDialog, { ...ctx(), months: current().months }, allowed.portfolio, b);
-  if (b.dataset.action === 'trends' || b.dataset.action === 'funnel') {
-    const section = b.dataset.action;
-    expandedSections[section] = !expandedSections[section];
-    b.setAttribute('aria-expanded', String(expandedSections[section]));
-  }
+  if (b.dataset.action === 'sales') salesDetails(b);
   if (b.dataset.action === 'pnl') profitDetails(b);
   if (b.dataset.action === 'target') {
     update({ target: Number(b.dataset.val) }, { focus: '[data-val="' + b.dataset.val + '"]' });

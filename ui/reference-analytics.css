@@ -1,0 +1,424 @@
+/* Finance Bento's three lower cards use a vertical field and a blurred core.
+   Keep the top, middle and lower stops independent of the card content. */
+.ra-card {
+  --ra-gap: clamp(16px, 1.55vw, 24px);
+  --ra-ink: #202422;
+  --ra-muted: #535b55;
+  --ra-mark: #186746;
+  position: relative;
+  isolation: isolate;
+  container-type: inline-size;
+  display: flex;
+  flex-flow: column;
+  min-width: 0;
+  min-height: clamp(306px, 21.5vw, 350px);
+  padding: var(--ra-gap);
+  border-radius: 27px;
+  overflow: hidden;
+  color: var(--ra-ink);
+  background: linear-gradient(
+    180deg,
+    var(--ra-top) 0%,
+    var(--ra-base) 36%,
+    var(--ra-base) 74%,
+    var(--ra-bottom) 100%
+  );
+  font-family: var(--ui-font);
+  font-variant-numeric: tabular-nums;
+}
+.ra-card::before {
+  position: absolute;
+  content: '';
+  inset: 7% 6% -2%;
+  border-radius: 90px;
+  background: var(--ra-core);
+  filter: blur(35px);
+  z-index: -1;
+  pointer-events: none;
+}
+.ref-flow {
+  --ra-top: #faedf1;
+  --ra-base: #efd8e1;
+  --ra-bottom: #f7e9ed;
+  --ra-core: #fffafb;
+  --ra-muted: #63525b;
+  --ra-in: #4a303d;
+  --ra-out: #a74e75;
+}
+.ref-cost {
+  --ra-top: #f7ede2;
+  --ra-base: #edddc9;
+  --ra-bottom: #f4e9d9;
+  --ra-core: #fffaf2;
+  --ra-muted: #655849;
+  --ra-spark: #79543c;
+}
+.ref-orders {
+  --ra-top: #eaf5ef;
+  --ra-base: #d9ebdf;
+  --ra-bottom: #e4f0e7;
+  --ra-core: #f9fefa;
+  --ra-muted: #495e51;
+}
+.ra-card h2 {
+  margin: 0;
+  color: inherit;
+  font: 600 clamp(18px, 1.4vw, 23px) / 1.18 var(--ui-font);
+  letter-spacing: -0.045em;
+}
+.ra-card .ra-stat {
+  margin: 14px 0 0;
+  color: inherit;
+  font: 400 clamp(34px, 12cqw, 52px) / 1.06 var(--ui-font);
+  letter-spacing: -0.064em;
+}
+.ra-stat small {
+  font-size: 0.54em;
+  letter-spacing: -0.04em;
+}
+.ra-card .ra-sub {
+  margin: 6px 0 0;
+  color: var(--ra-muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+.ra-sub strong {
+  color: var(--ra-mark);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ra-flow-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px 12px;
+  flex-wrap: wrap;
+}
+.ra-key {
+  display: grid;
+  gap: 3px;
+  font-size: 11px;
+  color: var(--ra-ink);
+}
+.ra-key span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.ra-key span::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ra-in);
+}
+.ra-key span + span::before {
+  background: var(--ra-out);
+}
+.ra-flow-chart {
+  position: relative;
+  flex: 1;
+  margin-top: 12px;
+  min-height: 160px;
+}
+.ra-flow-chart .ra-y-unit {
+  position: absolute;
+  left: 0;
+  top: -4px;
+  color: var(--ra-muted);
+  font: 400 10px var(--ui-font);
+}
+.ra-flow-plot {
+  position: absolute;
+  inset: 7px 16px 0 28px;
+}
+.ra-flow-plot > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.ra-grid-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px solid rgb(75 45 61 / 0.15);
+}
+.ra-grid-line::after {
+  content: '';
+  position: absolute;
+  right: -10px;
+  top: -1px;
+  width: 5px;
+  border-top: 1px solid rgb(75 45 61 / 0.37);
+}
+.ra-grid-line span {
+  position: absolute;
+  right: calc(100% + 7px);
+  top: 0;
+  transform: translateY(-55%);
+  color: var(--ra-muted);
+  line-height: 1;
+  font-size: 10px;
+}
+.ra-flow-plot path,
+.ra-spark-line {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.ra-flow-in {
+  stroke: var(--ra-in);
+  stroke-width: 2.45;
+}
+.ra-flow-out {
+  stroke: var(--ra-out);
+  stroke-width: 2.1;
+}
+.ra-card details > summary {
+  list-style: none;
+  cursor: pointer;
+}
+.ra-card details > summary::-webkit-details-marker {
+  display: none;
+}
+.ra-card summary:focus-visible {
+  outline: 2px solid var(--ra-mark);
+  outline-offset: 2px;
+}
+.ra-flow-point {
+  position: absolute;
+  inset-block: 0;
+  z-index: 1;
+  width: 0;
+}
+.ra-flow-point[open],
+.ra-bar[open] {
+  z-index: 4;
+}
+.ra-flow-point > summary {
+  display: grid;
+  place-items: center;
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  transform: translateX(-50%);
+  width: 30px;
+  border-radius: 6px;
+  font: 400 11px/1 var(--ui-font);
+  color: var(--ra-muted);
+}
+.ra-flow-point summary[aria-current],
+.ra-flow-point summary:hover,
+.ra-flow-point[open] summary {
+  color: var(--ra-ink);
+  font-weight: 600;
+}
+.ra-tip {
+  display: grid;
+  gap: 3px;
+  min-width: 148px;
+  width: max-content;
+  max-width: 210px;
+  position: absolute;
+  z-index: 4;
+  left: 0;
+  bottom: 55%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  padding: 9px 11px 10px;
+  border-radius: 12px;
+  background: #fff;
+  color: var(--ra-ink);
+  font: 400 11px/1.35 var(--ui-font);
+  box-shadow:
+    0 2px 5px #211b2014,
+    0 6px 22px #211b2023;
+}
+.ra-tip > strong {
+  font-size: 11px;
+  margin-bottom: 3px;
+}
+.ra-tip > span {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+.ra-tip > span > span {
+  color: var(--ra-muted);
+}
+.ra-tip b {
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ra-tip-start {
+  transform: none;
+}
+.ra-tip-end {
+  transform: translateX(-100%);
+}
+.ra-cost-split {
+  display: flex;
+  gap: 3px;
+  height: 6px;
+  margin: 17px 0;
+}
+.ra-cost-split i {
+  min-width: 0;
+  flex-basis: 0;
+  border-radius: 5px;
+  background: rgb(102 72 49 / var(--ra-tone));
+}
+.ra-cost-list {
+  list-style: none;
+  padding: 0;
+  margin: auto 0 0;
+}
+.ra-cost-list li {
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(32px, 0.46fr) max-content;
+  align-items: center;
+  gap: 7px;
+}
+.ra-cost-list li + li {
+  border-top: 1px solid rgb(91 65 42 / 0.15);
+}
+.ra-cost-label {
+  display: grid;
+  gap: 2px;
+  font-size: clamp(12px, 4cqw, 15px);
+  line-height: 1.18;
+}
+.ra-cost-label b {
+  font-weight: 550;
+}
+.ra-cost-label small {
+  color: var(--ra-muted);
+  font-size: 11px;
+}
+.ra-cost-value {
+  text-align: right;
+  font: 400 clamp(12px, 4.3cqw, 16px) / 1.1 var(--ui-font);
+  letter-spacing: -0.025em;
+  white-space: nowrap;
+}
+.ra-cost-value small {
+  font-size: 0.75em;
+  color: var(--ra-muted);
+}
+.ra-spark {
+  width: 100%;
+  max-width: 92px;
+  color: var(--ra-spark);
+  height: 28px;
+}
+.ra-spark-line {
+  stroke: currentColor;
+  stroke-width: 1.4;
+}
+.ra-order-plot {
+  display: grid;
+  grid-template-columns: max-content repeat(5, minmax(0, 1fr));
+  gap: 3px;
+  height: 147px;
+  margin: auto -3px 0;
+}
+.ra-bar-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0 2px 21px 0;
+  color: var(--ra-muted);
+  font-size: 10px;
+  line-height: 1;
+}
+.ra-bar {
+  position: relative;
+  min-width: 0;
+  align-self: stretch;
+}
+.ra-bar summary {
+  display: flex;
+  height: 100%;
+  flex-flow: column;
+  align-items: center;
+  gap: 8px;
+  border-radius: 12px;
+}
+.ra-track {
+  display: flex;
+  flex: 1;
+  align-items: end;
+  overflow: hidden;
+  width: min(64%, 24px);
+  border-radius: 18px;
+  background: #cddfd3;
+}
+.ra-track i {
+  display: block;
+  width: 100%;
+  border-radius: inherit;
+  background: #586e60;
+}
+.ra-bar summary[aria-current] i {
+  background: #146e47;
+}
+.ra-bar summary small {
+  color: var(--ra-muted);
+  font-size: 11px;
+  line-height: 1;
+}
+.ra-bar summary[aria-current] small,
+.ra-bar summary:hover small {
+  color: var(--ra-ink);
+}
+.ra-bar .ra-tip {
+  bottom: 22px;
+  left: 50%;
+}
+@container (max-width: 330px) {
+  .ra-flow-head {
+    gap: 7px;
+  }
+  .ra-key {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+}
+@media (max-width: 700px) {
+  .ra-card {
+    --ra-gap: 21px;
+    min-height: 315px;
+    border-radius: 24px;
+  }
+  .ra-card h2 {
+    font-size: 21px;
+  }
+  .ra-card .ra-sub {
+    font-size: 13px;
+  }
+  .ra-cost-list li {
+    min-height: 50px;
+  }
+  .ra-order-plot {
+    height: 154px;
+  }
+  .ra-cost-label small,
+  .ra-key,
+  .ra-bar summary small,
+  .ra-flow-point summary {
+    font-size: 12px;
+  }
+  .ra-grid-line span,
+  .ra-flow-chart .ra-y-unit,
+  .ra-bar-axis {
+    font-size: 11px;
+  }
+  .ra-flow-point summary {
+    min-width: 34px;
+  }
+}

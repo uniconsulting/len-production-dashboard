@@ -1,0 +1,447 @@
+/* Port of the reference's Net Worth and Allocation cards. The native chart
+   controls share the month and route selection of the dashboard. */
+.ref-lead {
+  --ref-ink: #262b2b;
+  --ref-muted: #51575c;
+  --ref-focus: #176546;
+  --lead-pad: clamp(19px, 2vw, 29px);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  container-type: inline-size;
+  min-width: 0;
+  height: clamp(334px, 27vw, 416px);
+  margin: 0;
+  padding: var(--lead-pad);
+  border: 0;
+  border-radius: 28px;
+  background: linear-gradient(175deg, #f8faf6, #eef0eb 51%, #e1e4df);
+  color: var(--ref-ink);
+  font: 400 14px/1.35 var(--ui-font);
+}
+
+.ref-lead::before {
+  position: absolute;
+  z-index: -1;
+  inset: 16% 10% -6%;
+  border-radius: 90px;
+  background: #fff;
+  filter: blur(50px);
+  pointer-events: none;
+  content: '';
+}
+
+.ref-revenue {
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(165deg, #d2d5db 0%, #e0e2e7 30%, #d4d8df 72%, #c3c8d2 100%);
+}
+
+.ref-revenue::before {
+  inset: 13% 9% -5%;
+  background: #fbfbfc;
+  filter: blur(48px);
+}
+
+.ref-lead-head,
+.ref-reading,
+.ref-legend,
+.ref-legend span,
+.ref-group-name,
+.ref-fleet-link {
+  display: flex;
+  align-items: center;
+}
+
+.ref-lead-head {
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.ref-lead h2 {
+  margin: 0;
+  color: inherit;
+  font: 600 clamp(17px, 1.4vw, 23px) / 1.16 var(--ui-font);
+  letter-spacing: -0.035em;
+  -webkit-text-stroke: 0.022em currentColor;
+}
+
+.ref-title-link {
+  display: inline;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+.ref-title-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.ref-legend {
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+.ref-legend span,
+.ref-group-name {
+  gap: 6px;
+}
+.ref-legend span {
+  white-space: nowrap;
+  color: var(--ref-muted);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.ref-legend i,
+.ref-group-name i {
+  flex: 0 0 7px;
+  width: 7px;
+  height: 7px;
+  background: var(--swatch);
+  border-radius: 50%;
+}
+
+.ref-reading {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px 16px;
+  margin-top: clamp(16px, 2.4cqw, 24px);
+}
+
+.ref-dots {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.11em;
+  margin: 0;
+  color: var(--ref-ink);
+  font: 600 clamp(41px, 8.9cqw, 84px) / 1 var(--ui-font-numeric);
+  letter-spacing: -0.048em;
+  white-space: nowrap;
+}
+
+.ref-dots small {
+  color: var(--ref-muted);
+  font: 400 0.36em/1 var(--ui-font);
+  letter-spacing: -0.06em;
+}
+
+.ref-change {
+  display: grid;
+  gap: 2px;
+  font-size: 12px;
+  color: var(--ref-muted);
+  line-height: 1.35;
+}
+.ref-change strong {
+  color: var(--ref-focus);
+  font-size: 15px;
+}
+.ref-change strong.is-down {
+  color: #93452c;
+}
+.ref-tax {
+  margin: 5px 0 0;
+  color: var(--ref-muted);
+  font-size: 12px;
+}
+
+.ref-stream {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 112px;
+  margin: 15px calc(-1 * var(--lead-pad)) calc(-1 * var(--lead-pad));
+}
+
+.ref-stream > svg,
+.ref-months {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.ref-months {
+  display: flex;
+  padding-block: 9px 11px;
+}
+.ref-month {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.ref-month-wire {
+  position: absolute;
+  inset: 12px auto 12px 50%;
+  width: 1px;
+  background: rgb(36 42 48 / 42%);
+  pointer-events: none;
+}
+
+.ref-month-label {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  min-height: 22px;
+  padding: 3px 9px;
+  border-radius: 99px;
+  background: rgb(255 255 255 / 95%);
+  box-shadow: 0 1px 4px rgb(46 58 65 / 7%);
+  color: var(--ref-ink);
+  font: 550 11.5px/1.25 var(--ui-font);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.ref-month-amount {
+  top: 0;
+}
+.ref-month-date {
+  bottom: 0;
+  color: var(--ref-muted);
+}
+.ref-month.is-first .ref-month-label {
+  left: 9px;
+  transform: none;
+}
+.ref-month.is-last .ref-month-label {
+  left: auto;
+  right: 9px;
+  transform: none;
+}
+.ref-month > span {
+  opacity: 0;
+}
+.ref-month.is-mark > span,
+.ref-month:focus-visible > span {
+  opacity: 1;
+}
+.ref-months:has(.ref-month:focus-visible) .ref-month:not(:focus-visible) > span {
+  opacity: 0;
+}
+.ref-month:focus-visible {
+  outline: 0;
+  z-index: 1;
+}
+.ref-month:focus-visible .ref-month-label {
+  box-shadow: 0 0 0 2px var(--ref-focus);
+}
+.ref-month:focus-visible .ref-month-wire {
+  background: var(--ref-ink);
+}
+.ref-title-link:focus-visible,
+.ref-fleet-link:focus-visible {
+  outline: 2px solid var(--ref-focus);
+  outline-offset: 3px;
+}
+@media (hover: hover) {
+  .ref-months:has(.ref-month:hover) .ref-month:not(:hover) > span {
+    opacity: 0;
+  }
+  .ref-months .ref-month:hover > span {
+    opacity: 1;
+  }
+  .ref-month:hover .ref-month-wire {
+    background: var(--ref-ink);
+  }
+  .ref-month:hover {
+    z-index: 1;
+  }
+}
+
+.ref-occupancy {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 6px;
+}
+
+.ref-occupancy .ref-lead-head {
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+.ref-fleet-link {
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 5px 9px;
+  border-radius: 20px;
+  background: rgb(59 79 68 / 7%);
+  color: var(--ref-ink);
+  font-size: 11.5px;
+  line-height: 1.3;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.ref-fleet-link:hover {
+  background: rgb(59 79 68 / 13%);
+}
+.ref-gauge {
+  position: relative;
+  align-self: center;
+  justify-self: center;
+  width: min(100%, 300px);
+  max-height: 100%;
+  aspect-ratio: 300/155;
+}
+
+.ref-gauge svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.ref-gauge-reading {
+  position: absolute;
+  inset: auto 0 4%;
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  line-height: 1;
+}
+
+.ref-gauge-reading > span {
+  color: var(--ref-ink);
+  font: 400 clamp(41px, 14.2cqw, 64px) / 1 var(--ui-font);
+  letter-spacing: -0.09em;
+}
+
+.ref-gauge-reading sup {
+  position: relative;
+  top: 0.18em;
+  vertical-align: top;
+  margin-inline-start: 0.15em;
+  font-size: 0.34em;
+  color: var(--ref-muted);
+  letter-spacing: -0.04em;
+}
+
+.ref-gauge-reading small {
+  margin-top: 4px;
+  color: var(--ref-muted);
+  font-size: clamp(11.5px, 4.1cqw, 14px);
+}
+.ref-fleet-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ref-fleet-captions,
+.ref-fleet-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(50px, auto);
+  align-items: center;
+  gap: 10px;
+  min-height: 29px;
+  font-size: clamp(12px, 4cqw, 14.5px);
+  line-height: 1.25;
+}
+.ref-fleet-captions {
+  min-height: 16px;
+  padding-bottom: 2px;
+  color: var(--ref-muted);
+  font-size: 10.5px;
+}
+.ref-fleet-captions span + span {
+  text-align: right;
+}
+.ref-fleet-list li + li {
+  border-top: 1px solid rgb(36 48 40 / 12%);
+}
+.ref-share {
+  color: var(--ref-muted);
+  font-size: 0.9em;
+  text-align: right;
+}
+.ref-fleet-list b {
+  font-weight: 500;
+  text-align: right;
+}
+
+@container (max-width: 550px) {
+  .ref-revenue .ref-lead-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 9px;
+  }
+  .ref-reading {
+    gap: 7px 14px;
+  }
+}
+
+@container (max-width: 390px) {
+  .ref-reading {
+    flex-wrap: wrap;
+    margin-top: 15px;
+  }
+  .ref-dots {
+    font-size: clamp(35px, 11.5cqw, 46px);
+  }
+  .ref-change {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+  }
+  .ref-change strong {
+    font-size: 13px;
+  }
+  .ref-legend span {
+    font-size: 11px;
+  }
+  .ref-month-label {
+    min-width: 47px;
+    padding-inline: 7px;
+  }
+  .ref-fleet-captions,
+  .ref-fleet-list li {
+    gap: 7px;
+  }
+}
+
+@container (max-width: 270px) {
+  .ref-fleet-count {
+    display: none;
+  }
+  .ref-fleet-link {
+    width: 32px;
+    height: 28px;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 760px) {
+  .ref-lead {
+    --lead-pad: 22px;
+    height: 338px;
+    border-radius: 24px;
+  }
+  .ref-lead h2 {
+    font-size: 19px;
+  }
+  .ref-reading {
+    margin-top: 16px;
+  }
+  .ref-stream {
+    margin-top: 18px;
+  }
+  .ref-occupancy {
+    height: 330px;
+  }
+  .ref-occupancy .ref-gauge {
+    width: min(100%, 272px);
+  }
+}

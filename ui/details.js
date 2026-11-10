@@ -151,18 +151,6 @@ function segments(label, buttons, extra = '') {
 }
 const chevron =
   '<svg class="d-chevron" viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true"><path d="m5 6 3 3 3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-// Both charts use the same production month. Machine time and personal time have separate denominators.
-function capacityRing(used, available) {
-  const load = ratio(used, available);
-  const filled = Math.max(0, Math.min(100, load * 100));
-  return `<div class="d-load-ring">
-    <svg viewBox="0 0 120 120" aria-hidden="true">
-      <circle class="d-ring-base" cx="60" cy="60" r="53" />
-      <circle class="d-ring-used" cx="60" cy="60" r="53" pathLength="100" stroke-dasharray="${filled} 100" transform="rotate(-90 60 60)" />
-    </svg>
-    <span><strong>${percent(load)}</strong><small>занято</small></span>
-  </div>`;
-}
 function growthSchedule(ctx) {
   const rows = ctx.plan.months
     .slice(0, 13)
@@ -182,54 +170,68 @@ function growthSchedule(ctx) {
   );
 }
 
+// A capsule spans the whole scale. Overloaded groups in short months expand the axis.
+function capacityColumns(m, loads) {
+  const maxScale = Math.max(1, Math.ceil(Math.max(...loads) * 10) / 10);
+  const busiest = loads.indexOf(Math.max(...loads));
+  const axis = [maxScale, maxScale / 2, 0].map((v) => `<span>${percent(v)}</span>`).join('');
+  return `<div class="production-columns">
+    <div class="production-scale" aria-hidden="true">${axis}</div>
+    ${groups
+      .map(
+        (group, i) => `<button type="button" class="production-column"
+      data-dv-action="capacity-group" data-dv-value="${group.key}"
+      aria-label="${group.full}. Загрузка ${percent(loads[i])}, ${hours(m.groupHours[i])} из ${hours(m.groupCapacity[i])}. Показать принтеры группы.">
+      <span class="production-column-hint" aria-hidden="true">${hours(m.groupHours[i])} из ${hours(m.groupCapacity[i])}</span>
+      <span class="production-column-plot" aria-hidden="true"><i class="production-column-track"><i class="${i === busiest ? 'peak' : ''}" style="height:${(100 * loads[i]) / maxScale}%"></i></i></span>
+      <span class="production-column-value">${percent(loads[i])}</span><span class="production-column-name">${group.key === 'xl' ? 'Giga' : group.label}</span>
+    </button>`,
+      )
+      .join('')}
+  </div>`;
+}
+
 function machineCapacity(ctx, m, warning) {
   const capacity = sum(m.groupCapacity);
-  const loads = groups.map((g, i) => ratio(m.groupHours[i], m.groupCapacity[i]));
+  const loads = groups.map((group, i) => ratio(m.groupHours[i], m.groupCapacity[i]));
   const busiest = loads.indexOf(Math.max(...loads));
   const groupRows = groups
     .map((group, i) => {
-      const count = ctx.model.printers.filter((p) => p.group === group.key).length;
-      if (compact.matches) {
-        return `<li><div><strong>${group.label}</strong><b>${percent(loads[i])}</b></div>
-          <p>${num(count)} маш. · ${hours(m.groupHours[i])} из ${hours(m.groupCapacity[i])}</p>
-          ${meter(loads[i], 'd-tone-' + i)}</li>`;
-      }
-      return `<tr class="${i === busiest ? 'd-capacity-peak' : ''}">
-      <th scope="row"><span>${group.label}</span><small>×${num(count)}</small></th>
-      <td>${num(m.groupHours[i], 1)}</td><td>${num(m.groupCapacity[i], 1)}</td>
-      <td><span>${percent(loads[i])}</span></td>
-    </tr>`;
+      const count = ctx.model.printers.filter((printer) => printer.group === group.key).length;
+      return `<div><dt>${group.label} <small>×${count}</small></dt><dd>${hours(m.groupHours[i])} из ${hours(m.groupCapacity[i])}</dd></div>`;
     })
     .join('');
   const route = Number.isFinite(m.engineerSeriesShare)
     ? `<p class="d-note d-route-share">Инженерные машины выполняют ${percent(m.engineerSeriesShare)} совместимых часов профилей B и D.</p>`
     : '';
-  const breakdown = compact.matches
-    ? disclosure(
-        'capacity',
-        'Загрузка по группам',
-        `<ul class="d-group-list">${groupRows}</ul>${route}${warning}`,
-      )
-    : `<table class="d-capacity-table"><caption class="d-sr-only">Машино-часы в выбранном месяце</caption>
-      <thead><tr><th scope="col">Группа</th><th scope="col">Занято, ч</th><th scope="col">Фонд, ч</th><th scope="col">Загрузка</th></tr></thead>
-      <tbody>${groupRows}</tbody></table>${route}`;
-  return `<section class="bento-card d-card d-resource d-util-card">
+  const detail = `<dl class="d-breakdown">${groupRows}</dl>
+    <p class="d-note">Свободно по парку ${hours(Math.max(0, capacity - m.printHours))}. В самой загруженной группе «${groups[busiest].label}» остаётся ${hours(Math.max(0, m.groupCapacity[busiest] - m.groupHours[busiest]))}.</p>
+    ${route}${compact.matches ? warning : ''}`;
+  return `<section class="bento-card d-card d-resource d-util-card production-panel production-fleet">
     <div class="d-resource-head"><h2>Загрузка парка</h2><span>${ctx.model.printers.length} машин</span></div>
-    <div class="d-fleet-reading">
-      ${capacityRing(m.printHours, capacity)}
-      <dl class="d-cap-totals"><div><dt>Занято печатью</dt><dd>${hours(m.printHours)}</dd></div><div><dt>Свободно</dt><dd>${hours(Math.max(0, capacity - m.printHours))}</dd></div></dl>
-    </div>
-    ${breakdown}
-    ${ctx.state.scenario === 'growth' ? growthSchedule(ctx) : ''}
-    <p class="d-cap-insight">Самая загруженная группа — ${groups[busiest].label.toLowerCase()}. Резерв <b>${hours(Math.max(0, m.groupCapacity[busiest] - m.groupHours[busiest]))}</b>.</p>
+    <div class="production-metric"><strong>${percent(ratio(m.printHours, capacity))}</strong></div>
+    <p class="production-subvalue">${hours(m.printHours)} печати из ${hours(capacity)} доступных</p>
+    ${capacityColumns(m, loads)}
+    <div class="production-links">${disclosure('capacity', 'Машино-часы по группам', detail)}
+    ${ctx.state.scenario === 'growth' ? growthSchedule(ctx) : ''}</div>
   </section>`;
 }
+
+// Free Cash and Goals use longer graduation marks at regular intervals.
+function workTicks(share) {
+  const count = 40;
+  const marks = Array.from({ length: count }, (_, i) => {
+    const x = 2 + (236 * i) / (count - 1);
+    return `<line x1="${x}" x2="${x}" y1="${i % 5 === 0 ? 2 : 7}" y2="17" class="${(i + 0.5) / count <= share ? 'filled' : ''}" />`;
+  }).join('');
+  return `<svg class="production-ticks" viewBox="0 0 240 20" preserveAspectRatio="none" aria-hidden="true" focusable="false">${marks}</svg>`;
+}
+
 function operatorCapacity(ctx, m) {
   const founders = m.m <= ctx.model.meta.ownersMonths;
   const people = founders ? 'Работа основателей' : 'Работа оператора';
-  const available = m.laborCapacity,
-    booked = m.operatorHours - (m.ownerSupportHours ?? 0);
-  const share = ratio(booked, available);
+  const booked = m.operatorHours - (m.ownerSupportHours ?? 0);
+  const available = m.laborCapacity;
   const breakdown = [
     'Настройки и запуск через ЛËН',
     'Столы и неудачные построения',
@@ -237,31 +239,27 @@ function operatorCapacity(ctx, m) {
     'Дополнительная отделка',
   ];
   const support =
-    !founders && ctx.state.scenario === 'growth'
-      ? `<p class="d-owner-support">Помощь основателей по партиям <strong>${hours(m.ownerSupportHours)} из ${hours(m.ownerSupportCapacity)}</strong></p>`
+    !founders && Number.isFinite(m.ownerSupportCapacity)
+      ? `<div class="production-work-row d-owner-support"><div><span>Помощь основателей</span><strong>${hours(m.ownerSupportHours)} <small>из ${hours(m.ownerSupportCapacity)}</small></strong></div>
+      ${workTicks(ratio(m.ownerSupportHours, m.ownerSupportCapacity))}</div>`
       : '';
-  const contractor = Number.isFinite(m.contractorCapacity)
-    ? `из ${hours(m.contractorCapacity)} по плану`
-    : 'внешняя подготовка';
-  const locations = `<dl class="d-work-locations">
-      <div><dt>Всего на площадке</dt><dd>${hours(m.operatorHours + m.roundsHours)}</dd><small>включая ${hours(m.roundsHours)} на обходы</small></div>
-      <div><dt>У подрядчика</dt><dd>${hours(m.externalHours)}</dd><small>${contractor}</small></div>
-    </dl>`;
-  const detail = `<dl class="d-breakdown">${breakdown.map((name, i) => `<div><dt>${name}</dt><dd>${hours(m.labor[i])}</dd></div>`).join('')}</dl>
-      <p class="d-note">В расчёте отделка требуется трети принятых партий. Обходы покрываются резервом рабочего графика.</p>
-      ${m.ownerSupportHours > 0 ? `<p class="d-note">Дополнительный труд двух основателей по партиям оценён в ${rub(m.ownerSupportCost)} за месяц по ставке ${rub(m.ownerSupportCost / m.ownerSupportHours, 2)} за час. Стоимость учтена в экономической прибыли.</p>` : ''}`;
-  return `<section class="bento-card d-card d-resource d-work-card">
+  const hasContractorCapacity = Number.isFinite(m.contractorCapacity);
+  const contractor = `<div class="production-work-row"><div><span>У подрядчика</span><strong>${hours(m.externalHours)} ${hasContractorCapacity ? `<small>из ${hours(m.contractorCapacity)}</small>` : ''}</strong></div>
+    ${hasContractorCapacity ? workTicks(ratio(m.externalHours, m.contractorCapacity)) : ''}</div>`;
+  const detail = `<dl class="d-breakdown">${breakdown.map((name, i) => `<div><dt>${name}</dt><dd>${hours(m.labor[i])}</dd></div>`).join('')}
+      <div><dt>Обходы</dt><dd>${hours(m.roundsHours)}</dd></div><div><dt>Всего на площадке</dt><dd>${hours(m.operatorHours + m.roundsHours)}</dd></div></dl>
+      <p class="d-note">Отделка требуется трети принятых партий. Обходы покрываются резервом рабочего графика.</p>
+      ${m.ownerSupportHours > 0 ? `<p class="d-note">Работа основателей по партиям оценена в ${rub(m.ownerSupportCost)} за месяц по ставке ${rub(m.ownerSupportCost / m.ownerSupportHours, 2)} за час. Её стоимость учтена в экономической прибыли.</p>` : ''}`;
+  return `<section class="bento-card d-card d-resource d-work-card production-panel production-work">
     <div class="d-resource-head"><h2>${people}</h2><span>${founders ? 'Двое в офисе' : 'График 6/1'}</span></div>
-    <div class="d-work-reading"><strong>${hours(booked)}</strong><span>по заказам из ${hours(available)}</span></div>
-    <div class="d-work-plot" aria-hidden="true"><i style="width:${Math.min(100, Math.max(0, share * 100))}%"></i></div>
-    <div class="d-work-labels"><span><i></i>${percent(share)} занято</span><span>Свободно <b>${hours(Math.max(0, available - booked))}</b></span></div>
-    ${support}
-    ${compact.matches ? '' : locations}
-    ${disclosure(
-      'labor',
-      compact.matches ? 'Состав работ и обходы' : 'Состав работы по заказам',
-      (compact.matches ? locations : '') + detail,
-    )}
+    <div class="production-metric"><strong>${hours(booked)}</strong></div>
+    <p class="production-subvalue">по заказам из ${hours(available)} доступных</p>
+    <div class="production-work-allocation">
+      <div class="production-work-row production-work-main"><div><span>Загрузка ${founders ? 'основателей' : 'оператора'}</span><strong>${percent(ratio(booked, available))}</strong></div>
+      ${workTicks(ratio(booked, available))}<p>Свободно ${hours(Math.max(0, available - booked))}</p></div>
+      ${support}${contractor}
+    </div>
+    <div class="production-links">${disclosure('labor', 'Состав работ и обходы', detail)}</div>
   </section>`;
 }
 function fleetRows(ctx, m, machines) {
@@ -871,6 +869,18 @@ export function bindDetails(root, ctx) {
     }
     if (action === 'month') {
       ctx.update({ month: Number(val) }, { focus: `[data-dv-action="month"][data-dv-value="${val}"]` });
+      return;
+    }
+    if (action === 'capacity-group') {
+      local.group = val;
+      local.machine = null;
+      local.allPrinters = false;
+      const registry = refreshDetails(panel, ctx).querySelector('.d-registry');
+      const filter =
+        registry.querySelector('[data-dv-select="group"]') ??
+        registry.querySelector('[data-dv-action="group"][data-dv-value="' + val + '"]');
+      filter?.focus({ preventScroll: true });
+      registry.scrollIntoView({ block: 'start' });
       return;
     }
     if (action === 'group') {
