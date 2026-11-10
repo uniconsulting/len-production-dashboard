@@ -1,0 +1,208 @@
+@import url('./tokens.css');
+
+.bento-card {
+  --ui-card-radius: var(--ui-radius);
+  --ui-card-inset: clamp(16px, 1.65vw, 26px);
+  box-sizing: border-box;
+  min-width: 0;
+  padding: var(--ui-card-inset);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-card-radius);
+  background: var(--ui-surface);
+  color: var(--ui-ink);
+}
+
+/* The radius of an inset surface follows R2 = R1 - inset - border. */
+.bento-card .ui-inset {
+  border-radius: max(0px, calc(var(--ui-card-radius) - var(--ui-card-inset) - 1px));
+}
+
+.ui-grain-fill {
+  isolation: isolate;
+  position: relative;
+  background: var(--ui-card-fill, var(--ui-fill-graphite));
+}
+.ui-grain-fill::before,
+.ui-grain-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.ui-grain-fill::before {
+  z-index: -1;
+  background: var(--ui-grain) repeat 0 0 / 200px 200px;
+  opacity: 0.12;
+  mix-blend-mode: soft-light;
+}
+.ui-grain-fill::after {
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 22%);
+}
+@supports (mask-composite: exclude) {
+  .ui-grain-fill::after {
+    padding: 1px;
+    background: linear-gradient(
+      135deg,
+      rgb(255 255 255 / 62%),
+      transparent 36%,
+      rgb(255 255 255 / 12%) 58%,
+      rgb(255 255 255 / 40%) 80%,
+      transparent
+    );
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    box-shadow: none;
+  }
+}
+
+.ui-table-frame {
+  position: relative;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd1c9 transparent;
+  overscroll-behavior-x: contain;
+}
+.ui-table {
+  width: 100%;
+  border-collapse: collapse;
+  font: var(--ui-body);
+  font-variant-numeric: tabular-nums;
+}
+.ui-table th,
+.ui-table td {
+  padding: 11px 12px;
+  text-align: start;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--ui-border);
+}
+.ui-table thead th {
+  background: var(--ui-quiet);
+  color: var(--ui-muted);
+  font: var(--ui-label);
+}
+.ui-table :is(th, td):first-child {
+  padding-inline-start: 14px;
+}
+.ui-table :is(th, td):last-child {
+  padding-inline-end: 14px;
+}
+.ui-table :is(thead, tbody, tfoot) .is-number {
+  text-align: end;
+  white-space: nowrap;
+}
+.ui-table tbody th {
+  font-weight: 550;
+}
+.ui-table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+.ui-table :is(.ui-total, tfoot) :is(td, th) {
+  border-top: 1px solid var(--ui-border-strong);
+  color: var(--ui-ink);
+  font-weight: 700;
+}
+
+.ui-segmented {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 2px;
+  max-width: 100%;
+  padding: 3px;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-control);
+  background: var(--ui-surface-hover);
+}
+.ui-segmented > button {
+  appearance: none;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 34px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: calc(var(--ui-radius-control) - 4px);
+  background: transparent;
+  color: var(--ui-muted);
+  font: 600 12px/16px var(--ui-font);
+  cursor: pointer;
+  transition:
+    background-color var(--ui-fast) var(--ui-ease),
+    color var(--ui-fast) var(--ui-ease);
+}
+.ui-segmented > button:is([aria-pressed='true'], [aria-selected='true'], .is-active) {
+  background: var(--ui-surface);
+  box-shadow: 0 1px 3px rgb(17 26 22 / 8%);
+  color: var(--ui-ink);
+}
+.ui-segmented > button:disabled,
+.ui-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+select.ui-select {
+  appearance: none;
+  box-sizing: border-box;
+  min-height: 40px;
+  max-width: 100%;
+  padding: 8px 35px 8px 13px;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--ui-radius-control);
+  background: var(--ui-surface)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%2359615c' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    no-repeat right 11px center / 16px;
+  color: var(--ui-ink);
+  font: 550 13px/20px var(--ui-font);
+  cursor: pointer;
+}
+.ui-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--ui-surface-hover);
+  color: var(--ui-muted);
+  font: 600 11px/15px var(--ui-font);
+}
+:is(.ui-segmented button, .ui-select, .ui-table-frame, .ui-table button):focus-visible {
+  outline: 2px solid var(--ui-focus);
+  outline-offset: 2px;
+}
+@media (hover: hover) {
+  .ui-segmented > button:enabled:hover {
+    color: var(--ui-ink);
+  }
+  .ui-table tbody tr:hover > * {
+    background-color: var(--ui-quiet);
+  }
+}
+@media (pointer: coarse) {
+  .ui-segmented > button,
+  select.ui-select {
+    min-height: 44px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ui-segmented > button {
+    transition: none;
+  }
+}
+@media (forced-colors: active) {
+  .ui-grain-fill::before,
+  .ui-grain-fill::after {
+    display: none;
+  }
+  .ui-segmented > button:is([aria-pressed='true'], [aria-selected='true'], .is-active) {
+    outline: 2px solid Highlight;
+  }
+  select.ui-select {
+    appearance: auto;
+  }
+}

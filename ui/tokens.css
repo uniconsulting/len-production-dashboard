@@ -1,0 +1,85 @@
+/* Mieru palette, typographic roles and geometry; LEN's body + heading pairing. */
+@font-face {
+  font-family: 'Garet Book';
+  src: url('../assets/fonts/Garet-Book.woff2') format('woff2');
+  font-display: swap;
+  font-weight: 400;
+}
+@font-face {
+  font-family: 'Manrope';
+  src: url('../assets/fonts/manrope-cyrillic-wght-normal.woff2') format('woff2');
+  font-display: swap;
+  font-weight: 200 800;
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Manrope';
+  src: url('../assets/fonts/manrope-latin-wght-normal.woff2') format('woff2');
+  font-display: swap;
+  font-weight: 200 800;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  /* The ruble sign is shipped in Fontsource's Latin Extended subset. */
+  font-family: 'Manrope';
+  src: url('../assets/fonts/manrope-latin-ext-wght-normal.woff2') format('woff2');
+  font-display: swap;
+  font-weight: 200 800;
+  unicode-range: U+20AD-20C0;
+}
+@font-face {
+  font-family: 'Doto Rounded';
+  src: url('../assets/fonts/Doto-Rounded-SemiBold.woff2') format('woff2');
+  font-display: swap;
+  font-weight: 600;
+}
+
+:root {
+  --ui-font: 'Manrope', Arial, sans-serif;
+  --ui-font-display: 'Garet Book', 'Manrope', Arial, sans-serif;
+  --ui-font-numeric: 'Doto Rounded', ui-monospace, Menlo, monospace;
+  --ui-canvas: #f4f4f2;
+  --ui-surface: #fff;
+  --ui-quiet: #fbfbf9;
+  --ui-surface-hover: #eceeea;
+  --ui-ink: #111a16;
+  --ui-muted: #59615c;
+  --ui-tertiary: #6b736e;
+  --ui-border: rgb(17 26 22 / 10%);
+  --ui-border-strong: rgb(17 26 22 / 17%);
+  --ui-accent: #f47d02;
+  --ui-accent-soft: #fff4e8;
+  --ui-accent-ink: #a94700;
+  --ui-lime: #e9ff13;
+  --ui-cool: #5e8797;
+  --ui-positive: #257a49;
+  --ui-negative: #b9473f;
+  --ui-radius: 24px;
+  --ui-radius-panel: 32px;
+  --ui-radius-control: 12px;
+  --ui-radius-menu: 18px;
+  --ui-radius-option: 11px;
+  --ui-gap: 16px;
+  --ui-fast: 150ms;
+  --ui-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ui-focus: #146de8;
+  --ui-display: 400 clamp(38px, 4.1vw, 58px) / 1.06 var(--ui-font-display);
+  --ui-heading: 400 clamp(26px, 2.4vw, 40px) / 1.1 var(--ui-font-display);
+  --ui-section: 600 20px/26px var(--ui-font);
+  --ui-body: 450 14px/20px var(--ui-font);
+  --ui-label: 500 12px/16px var(--ui-font);
+
+  /* GlassFill: local colour fields over a base gradient, independently tiled grain. */
+  --ui-fill-graphite:
+    radial-gradient(105% 85% at 0% 105%, #555a57 0%, transparent 82%),
+    radial-gradient(70% 105% at 110% 20%, #171a19 0%, transparent 82%),
+    linear-gradient(135deg, #303633, #252a28 48%, #414845);
+  --ui-fill-orange:
+    radial-gradient(85% 95% at -10% -5%, #ffcc78 0%, transparent 72%),
+    radial-gradient(85% 85% at 108% 0%, #dc5b00 0%, transparent 76%),
+    radial-gradient(80% 90% at 100% 110%, #ff9944 0%, transparent 78%),
+    linear-gradient(145deg, #ef790b, var(--ui-accent) 65%, #f89332);
+  --ui-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.78' numOctaves='3' seed='19' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23888' filter='url(%23n)' d='M0 0h256v256H0z'/%3E%3C/svg%3E");
+}
