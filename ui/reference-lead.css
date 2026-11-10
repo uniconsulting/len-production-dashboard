@@ -1,9 +1,6 @@
 /* Port of the reference's Net Worth and Allocation cards. The native chart
    controls share the month and route selection of the dashboard. */
 .ref-lead {
-  --ref-ink: #262b2b;
-  --ref-muted: #51575c;
-  --ref-focus: #176546;
   --lead-pad: clamp(19px, 2vw, 29px);
   position: relative;
   isolation: isolate;
@@ -15,8 +12,8 @@
   padding: var(--lead-pad);
   border: 0;
   border-radius: 28px;
-  background: linear-gradient(175deg, #f8faf6, #eef0eb 51%, #e1e4df);
-  color: var(--ref-ink);
+  background: linear-gradient(180deg, #686a75, #383941 36%, #383941 74%, #61616c);
+  color: #fff;
   font: 400 14px/1.35 var(--ui-font);
 }
 
@@ -25,7 +22,7 @@
   z-index: -1;
   inset: 16% 10% -6%;
   border-radius: 90px;
-  background: #fff;
+  background: #07070a;
   filter: blur(50px);
   pointer-events: none;
   content: '';
@@ -34,12 +31,12 @@
 .ref-revenue {
   display: flex;
   flex-direction: column;
-  background: linear-gradient(165deg, #d2d5db 0%, #e0e2e7 30%, #d4d8df 72%, #c3c8d2 100%);
+  background: linear-gradient(180deg, #777889 0%, #474854 30%, #343540 71%, #717386 100%);
 }
 
 .ref-revenue::before {
   inset: 13% 9% -5%;
-  background: #fbfbfc;
+  background: #0d0d16;
   filter: blur(48px);
 }
 
@@ -95,7 +92,7 @@
 }
 .ref-legend span {
   white-space: nowrap;
-  color: var(--ref-muted);
+  color: #e9e8f1;
   font-size: 12px;
   line-height: 1.3;
 }
@@ -121,14 +118,14 @@
   align-items: baseline;
   gap: 0.11em;
   margin: 0;
-  color: var(--ref-ink);
+  color: #fff;
   font: 600 clamp(41px, 8.9cqw, 84px) / 1 var(--ui-font-numeric);
   letter-spacing: -0.048em;
   white-space: nowrap;
 }
 
 .ref-dots small {
-  color: var(--ref-muted);
+  color: #dedee8;
   font: 400 0.36em/1 var(--ui-font);
   letter-spacing: -0.06em;
 }
@@ -137,19 +134,19 @@
   display: grid;
   gap: 2px;
   font-size: 12px;
-  color: var(--ref-muted);
+  color: #dddce7;
   line-height: 1.35;
 }
 .ref-change strong {
-  color: var(--ref-focus);
+  color: #aaf3c2;
   font-size: 15px;
 }
 .ref-change strong.is-down {
-  color: #93452c;
+  color: #ffb89e;
 }
 .ref-tax {
   margin: 5px 0 0;
-  color: var(--ref-muted);
+  color: #d2d1dc;
   font-size: 12px;
 }
 
@@ -186,7 +183,7 @@
   position: absolute;
   inset: 12px auto 12px 50%;
   width: 1px;
-  background: rgb(36 42 48 / 42%);
+  background: rgb(0 0 0 / 58%);
   pointer-events: none;
 }
 
@@ -201,9 +198,8 @@
   min-height: 22px;
   padding: 3px 9px;
   border-radius: 99px;
-  background: rgb(255 255 255 / 95%);
-  box-shadow: 0 1px 4px rgb(46 58 65 / 7%);
-  color: var(--ref-ink);
+  background: #0a0a0d;
+  color: #fff;
   font: 550 11.5px/1.25 var(--ui-font);
   white-space: nowrap;
   pointer-events: none;
@@ -214,7 +210,7 @@
 }
 .ref-month-date {
   bottom: 0;
-  color: var(--ref-muted);
+  color: #d4d3dc;
 }
 .ref-month.is-first .ref-month-label {
   left: 9px;
@@ -240,14 +236,14 @@
   z-index: 1;
 }
 .ref-month:focus-visible .ref-month-label {
-  box-shadow: 0 0 0 2px var(--ref-focus);
+  box-shadow: 0 0 0 2px #b4f8cf;
 }
 .ref-month:focus-visible .ref-month-wire {
-  background: var(--ref-ink);
+  background: #fff;
 }
 .ref-title-link:focus-visible,
 .ref-fleet-link:focus-visible {
-  outline: 2px solid var(--ref-focus);
+  outline: 2px solid #aaf3c2;
   outline-offset: 3px;
 }
 @media (hover: hover) {
@@ -258,7 +254,7 @@
     opacity: 1;
   }
   .ref-month:hover .ref-month-wire {
-    background: var(--ref-ink);
+    background: #fff;
   }
   .ref-month:hover {
     z-index: 1;
@@ -280,8 +276,8 @@
   flex-shrink: 0;
   padding: 5px 9px;
   border-radius: 20px;
-  background: rgb(59 79 68 / 7%);
-  color: var(--ref-ink);
+  background: rgb(255 255 255 / 13%);
+  color: #fff;
   font-size: 11.5px;
   line-height: 1.3;
   text-decoration: none;
@@ -289,7 +285,7 @@
 }
 
 .ref-fleet-link:hover {
-  background: rgb(59 79 68 / 13%);
+  background: rgb(255 255 255 / 22%);
 }
 .ref-gauge {
   position: relative;
@@ -315,7 +311,7 @@
 }
 
 .ref-gauge-reading > span {
-  color: var(--ref-ink);
+  color: #fff;
   font: 400 clamp(41px, 14.2cqw, 64px) / 1 var(--ui-font);
   letter-spacing: -0.09em;
 }
@@ -326,13 +322,13 @@
   vertical-align: top;
   margin-inline-start: 0.15em;
   font-size: 0.34em;
-  color: var(--ref-muted);
+  color: #e0dfe9;
   letter-spacing: -0.04em;
 }
 
 .ref-gauge-reading small {
   margin-top: 4px;
-  color: var(--ref-muted);
+  color: #c5c4ce;
   font-size: clamp(11.5px, 4.1cqw, 14px);
 }
 .ref-fleet-list {
@@ -353,17 +349,17 @@
 .ref-fleet-captions {
   min-height: 16px;
   padding-bottom: 2px;
-  color: var(--ref-muted);
+  color: #c2c0cb;
   font-size: 10.5px;
 }
 .ref-fleet-captions span + span {
   text-align: right;
 }
 .ref-fleet-list li + li {
-  border-top: 1px solid rgb(36 48 40 / 12%);
+  border-top: 1px solid rgb(255 255 255 / 14%);
 }
 .ref-share {
-  color: var(--ref-muted);
+  color: #bebdc9;
   font-size: 0.9em;
   text-align: right;
 }

@@ -34,6 +34,9 @@
   outline: 2px solid var(--ui-focus);
   outline-offset: 3px;
 }
+.ref-board :is(.ref-lead, .strip-result, .ra-card) :is(button, a, summary, [tabindex]):focus-visible {
+  outline-color: #b3ffce;
+}
 .ref-mini {
   min-width: 0;
   display: flex;
@@ -50,8 +53,8 @@
 }
 .strip-result {
   background:
-    radial-gradient(ellipse at 58% 60%, #f0faf1 4%, #e4f5e8 44%, transparent 90%),
-    linear-gradient(159deg, #d4ebdb, #bee3c9 68%, #a0d7b7);
+    radial-gradient(ellipse at 58% 85%, #174331 8%, #24523d 40%, transparent 91%),
+    linear-gradient(159deg, #b2e8c8 0%, #71bb93 27%, #286b49 68%, #66a47c 100%);
 }
 .ref-mini h2 {
   margin: 0;
@@ -91,7 +94,10 @@
   font-size: 0.42em;
   letter-spacing: -0.035em;
 }
+.ref-board .strip-result h2 { color: #112b1e; }
+.ref-board .strip-result h2 button:hover { color: #051a0c; }
 .strip-result .strip-amount {
+  color: white;
   font-size: clamp(37px, 21cqw, 60px);
 }
 .strip-caption {
@@ -100,7 +106,7 @@
   color: var(--ui-muted);
 }
 .strip-result .strip-caption {
-  color: #385544;
+  color: #ddf0e4;
 }
 .ref-ticks {
   display: block;

@@ -77,9 +77,9 @@ function sparkline(months, key) {
   const line = smoothPath(points),
     [endX, endY] = points.at(-1);
   return `<svg class="ra-spark" viewBox="0 0 96 30" aria-hidden="true">
-    <defs><linearGradient id="ra-wash-${key}" x2="0" y2="1"><stop stop-color="currentColor" stop-opacity=".16"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></linearGradient></defs>
+    <defs><linearGradient id="ra-wash-${key}" x2="0" y2="1"><stop stop-color="#fff" stop-opacity=".16"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
     <path d="${line} L${endX},30 L3,30 Z" fill="url(#ra-wash-${key})"/>
-    <path class="ra-spark-line" d="${line}"/><circle cx="${endX}" cy="${endY}" r="2.9" fill="currentColor"/></svg>`;
+    <path class="ra-spark-line" d="${line}"/><circle cx="${endX}" cy="${endY}" r="2.9" fill="#fff"/></svg>`;
 }
 
 function tooltip(month, lines, placement = '') {

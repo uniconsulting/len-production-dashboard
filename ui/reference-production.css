@@ -1,12 +1,12 @@
 /* The provided reference uses a gradient surface with a blurred core,
    capsule columns for quantities and notched scales for capacity. */
 .detail-view .production-panel {
-  --ui-ink: #15251e;
-  --detail-quiet: #4d6056;
-  --ui-accent-ink: #126644;
-  --ui-focus: #08633c;
-  --panel-accent: #17804c;
-  --detail-inset: rgb(34 70 49 / 7%);
+  --ui-ink: #fff;
+  --detail-quiet: #d0d7d3;
+  --ui-accent-ink: #adffd4;
+  --ui-focus: #baffdb;
+  --panel-accent: #8df0b8;
+  --detail-inset: rgb(255 255 255 / 9%);
   position: relative;
   isolation: isolate;
   overflow: hidden;
@@ -44,16 +44,16 @@
   filter: blur(38px);
 }
 .production-fleet {
-  --p-top: #e6f5ed;
-  --p-base: #d3ebdd;
-  --p-bottom: #dfefe6;
-  --p-core: #f6fcf7;
+  --p-top: #4f8a70;
+  --p-base: #247454;
+  --p-bottom: #428568;
+  --p-core: #06261b;
 }
 .production-work {
-  --p-top: #f2f3f4;
-  --p-base: #dce0e2;
-  --p-bottom: #e6e8e9;
-  --p-core: #fcfdfc;
+  --p-top: #666771;
+  --p-base: #34353d;
+  --p-bottom: #44464e;
+  --p-core: #090a0d;
 }
 .production-panel .d-resource-head {
   align-items: baseline;
@@ -64,7 +64,7 @@
   line-height: 1.18;
 }
 .production-panel .d-resource-head > span {
-  color: var(--detail-quiet);
+  color: #e6ede9;
   font-size: 13px;
 }
 .production-metric {
@@ -79,7 +79,7 @@
 }
 .detail-view .production-subvalue {
   margin-top: 5px;
-  color: var(--detail-quiet);
+  color: #e1e9e5;
   font-size: 14px;
   line-height: 1.45;
 }
@@ -97,7 +97,7 @@
   flex-direction: column;
   justify-content: space-between;
   padding-right: 4px;
-  color: var(--detail-quiet);
+  color: #c1d5cb;
   font-size: 11px;
   line-height: 1;
   text-align: right;
@@ -127,7 +127,7 @@
   padding: 8px 10px;
   border-radius: 10px;
   background: #fff;
-  color: var(--ui-ink);
+  color: #15251e;
   box-shadow: 0 3px 14px rgb(27 54 37 / 16%);
   text-align: start;
   pointer-events: none;
@@ -163,7 +163,7 @@
   display: block;
   height: 100%;
   width: clamp(20px, 6cqi, 34px);
-  background: #c1d6c8;
+  background: rgb(0 0 0 / 30%);
   border-radius: 99px;
 }
 .production-column-track > i {
@@ -171,7 +171,7 @@
   display: block;
   inset: auto 0 0;
   border-radius: inherit;
-  background: #344b3e;
+  background: #fff;
 }
 .production-column-track > i.peak {
   background: var(--panel-accent);
@@ -183,12 +183,12 @@
   line-height: 1.25;
 }
 .production-column-name {
-  color: var(--detail-quiet);
+  color: #d8e8df;
   font-size: 12px;
   line-height: 1.4;
 }
 .production-column:hover .production-column-name {
-  color: var(--ui-accent-ink);
+  color: #fff;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -234,7 +234,7 @@
   margin-top: 2px;
 }
 .production-ticks line {
-  stroke: #b8c3bd;
+  stroke: rgb(255 255 255 / 25%);
   stroke-linecap: round;
   stroke-width: 2;
   vector-effect: non-scaling-stroke;
@@ -243,20 +243,20 @@
   stroke: var(--panel-accent);
 }
 .production-work-row:not(.production-work-main) .filled {
-  stroke: #53645b;
+  stroke: #d9e2dc;
 }
 .production-links {
   margin-top: auto;
 }
 .detail-view .production-links .d-disclosure {
   margin: 0;
-  border-top: 1px solid rgb(37 67 51 / 14%);
+  border-top: 1px solid rgb(255 255 255 / 18%);
 }
 .detail-view .production-links summary {
   width: 100%;
   min-height: 41px;
   justify-content: space-between;
-  color: var(--ui-ink);
+  color: #f7f9f8;
   font-size: 14px;
 }
 .detail-view .production-links .d-disclosure[open] {
@@ -269,7 +269,7 @@
   font-size: 12px;
 }
 .production-links .text-btn {
-  color: var(--ui-accent-ink);
+  color: #fff;
 }
 .d-top-grid:has(.production-links details[open]) {
   align-items: start;

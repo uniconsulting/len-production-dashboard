@@ -2,9 +2,8 @@
    Keep the top, middle and lower stops independent of the card content. */
 .ra-card {
   --ra-gap: clamp(16px, 1.55vw, 24px);
-  --ra-ink: #202422;
-  --ra-muted: #535b55;
-  --ra-mark: #186746;
+  --ra-ink: #fff;
+  --ra-muted: rgb(255 255 255 / 81%);
   position: relative;
   isolation: isolate;
   container-type: inline-size;
@@ -29,36 +28,38 @@
 .ra-card::before {
   position: absolute;
   content: '';
-  inset: 7% 6% -2%;
+  inset: 16% 10% -6%;
   border-radius: 90px;
   background: var(--ra-core);
-  filter: blur(35px);
+  filter: blur(44px);
   z-index: -1;
   pointer-events: none;
 }
+.ra-card::after {
+  position: absolute;
+  content: '';
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgb(0 0 0 / 0.14), transparent 36%);
+}
 .ref-flow {
-  --ra-top: #faedf1;
-  --ra-base: #efd8e1;
-  --ra-bottom: #f7e9ed;
-  --ra-core: #fffafb;
-  --ra-muted: #63525b;
-  --ra-in: #4a303d;
-  --ra-out: #a74e75;
+  --ra-top: #f5a3c8;
+  --ra-base: #c32874;
+  --ra-bottom: #df5a98;
+  --ra-core: #3a031c;
 }
 .ref-cost {
-  --ra-top: #f7ede2;
-  --ra-base: #edddc9;
-  --ra-bottom: #f4e9d9;
-  --ra-core: #fffaf2;
-  --ra-muted: #655849;
-  --ra-spark: #79543c;
+  --ra-top: #dcaa86;
+  --ra-base: #a45931;
+  --ra-bottom: #b57250;
+  --ra-core: #28110b;
 }
 .ref-orders {
-  --ra-top: #eaf5ef;
-  --ra-base: #d9ebdf;
-  --ra-bottom: #e4f0e7;
-  --ra-core: #f9fefa;
-  --ra-muted: #495e51;
+  --ra-top: #96d6b6;
+  --ra-base: #2a7c5e;
+  --ra-bottom: #4a9777;
+  --ra-core: #071f17;
 }
 .ra-card h2 {
   margin: 0;
@@ -83,7 +84,7 @@
   line-height: 1.4;
 }
 .ra-sub strong {
-  color: var(--ra-mark);
+  color: #f0ff79;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -110,10 +111,10 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--ra-in);
+  background: #fff;
 }
 .ra-key span + span::before {
-  background: var(--ra-out);
+  background: #ffb2da;
 }
 .ra-flow-chart {
   position: relative;
@@ -143,7 +144,7 @@
   position: absolute;
   left: 0;
   right: 0;
-  border-top: 1px solid rgb(75 45 61 / 0.15);
+  border-top: 1px solid rgb(255 255 255 / 0.19);
 }
 .ra-grid-line::after {
   content: '';
@@ -151,7 +152,7 @@
   right: -10px;
   top: -1px;
   width: 5px;
-  border-top: 1px solid rgb(75 45 61 / 0.37);
+  border-top: 1px solid rgb(255 255 255 / 0.5);
 }
 .ra-grid-line span {
   position: absolute;
@@ -170,11 +171,11 @@
   vector-effect: non-scaling-stroke;
 }
 .ra-flow-in {
-  stroke: var(--ra-in);
+  stroke: #fff;
   stroke-width: 2.45;
 }
 .ra-flow-out {
-  stroke: var(--ra-out);
+  stroke: #ffbbde;
   stroke-width: 2.1;
 }
 .ra-card details > summary {
@@ -185,7 +186,7 @@
   display: none;
 }
 .ra-card summary:focus-visible {
-  outline: 2px solid var(--ra-mark);
+  outline: 2px solid #fff;
   outline-offset: 2px;
 }
 .ra-flow-point {
@@ -230,12 +231,10 @@
   pointer-events: none;
   padding: 9px 11px 10px;
   border-radius: 12px;
-  background: #fff;
-  color: var(--ra-ink);
+  background: #20191d;
+  color: white;
   font: 400 11px/1.35 var(--ui-font);
-  box-shadow:
-    0 2px 5px #211b2014,
-    0 6px 22px #211b2023;
+  box-shadow: 0 4px 18px #0003;
 }
 .ra-tip > strong {
   font-size: 11px;
@@ -247,7 +246,7 @@
   justify-content: space-between;
 }
 .ra-tip > span > span {
-  color: var(--ra-muted);
+  color: #e1dfe0;
 }
 .ra-tip b {
   font-weight: 600;
@@ -269,7 +268,7 @@
   min-width: 0;
   flex-basis: 0;
   border-radius: 5px;
-  background: rgb(102 72 49 / var(--ra-tone));
+  background: rgb(255 255 255 / var(--ra-tone));
 }
 .ra-cost-list {
   list-style: none;
@@ -284,7 +283,7 @@
   gap: 7px;
 }
 .ra-cost-list li + li {
-  border-top: 1px solid rgb(91 65 42 / 0.15);
+  border-top: 1px solid rgb(255 255 255 / 0.15);
 }
 .ra-cost-label {
   display: grid;
@@ -312,11 +311,10 @@
 .ra-spark {
   width: 100%;
   max-width: 92px;
-  color: var(--ra-spark);
   height: 28px;
 }
 .ra-spark-line {
-  stroke: currentColor;
+  stroke: #fff;
   stroke-width: 1.4;
 }
 .ra-order-plot {
@@ -355,16 +353,16 @@
   overflow: hidden;
   width: min(64%, 24px);
   border-radius: 18px;
-  background: #cddfd3;
+  background: rgb(0 0 0 / 0.32);
 }
 .ra-track i {
   display: block;
   width: 100%;
   border-radius: inherit;
-  background: #586e60;
+  background: #fff;
 }
 .ra-bar summary[aria-current] i {
-  background: #146e47;
+  background: #e8ff3c;
 }
 .ra-bar summary small {
   color: var(--ra-muted);

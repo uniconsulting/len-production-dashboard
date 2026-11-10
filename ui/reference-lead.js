@@ -1,9 +1,9 @@
 import { icon } from './icons.js';
 
 const groups = [
-  { id: 'series', label: 'Серийные', color: '#4b8d73', capacityIndex: 2 },
-  { id: 'engineering', label: 'Инженерные', color: '#8a8fc3', capacityIndex: 1 },
-  { id: 'xl', label: 'Сверхгабарит', color: '#c48160', capacityIndex: 0 },
+  { id: 'series', label: 'Серийные', color: '#f5f4ff', capacityIndex: 2 },
+  { id: 'engineering', label: 'Инженерные', color: '#a9b2ff', capacityIndex: 1 },
+  { id: 'xl', label: 'Сверхгабарит', color: '#ffb37a', capacityIndex: 0 },
 ];
 
 const number = new Intl.NumberFormat('ru-RU');
@@ -143,7 +143,7 @@ function occupancyCard(model, r, state) {
     const radius = i % 7 === 0 ? 112 : 118;
     const x = (v) => (Math.cos(angle) * v).toFixed(2);
     const y = (v) => (Math.sin(angle) * v).toFixed(2);
-    return `<line x1="${x(136)}" y1="${y(136)}" x2="${x(radius)}" y2="${y(radius)}" stroke="${groups[index]?.color || '#d0d3cd'}"/>`;
+    return `<line x1="${x(136)}" y1="${y(136)}" x2="${x(radius)}" y2="${y(radius)}" stroke="${groups[index]?.color || '#55555e'}"/>`;
   }).join('');
   const rows = groups
     .map((group, i) => {
