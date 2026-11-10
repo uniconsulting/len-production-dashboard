@@ -1,0 +1,495 @@
+/* On a wide screen the two result cards are individual cells in the KPI grid. */
+.financial-cards,
+.metric-trend {
+  display: contents;
+}
+.financial-cards::before,
+.financial-actions,
+.mobile-filter-trigger,
+.sales-toggle {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  :root {
+    --phone-gutter: clamp(16px, 5vw, 30px);
+    --phone-inset: clamp(18px, 5.8vw, 28px);
+    --phone-gap: clamp(16px, 4.8vw, 24px);
+  }
+  html {
+    scroll-padding-block: 12px calc(76px + env(safe-area-inset-bottom));
+  }
+  .mobile-header {
+    min-height: 56px;
+    padding: 4px max(var(--phone-gutter), env(safe-area-inset-right)) 4px
+      max(var(--phone-gutter), env(safe-area-inset-left));
+    background: transparent;
+  }
+  .mobile-brand,
+  .mobile-header .share-btn,
+  .round-link,
+  .close-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .mobile-brand .brand-lockup {
+    width: 74px;
+  }
+  .mobile-header .share-btn {
+    padding: 0;
+    border-radius: 50%;
+    background: var(--ui-quiet);
+  }
+  main {
+    padding: 8px max(var(--phone-gutter), env(safe-area-inset-right))
+      calc(84px + env(safe-area-inset-bottom)) max(var(--phone-gutter), env(safe-area-inset-left));
+  }
+  .page-title {
+    margin-bottom: 14px;
+  }
+  .page-title h1 {
+    font-size: clamp(30px, 8.3vw, 44px);
+    line-height: 1.12;
+    text-wrap: balance;
+  }
+  .toolbar {
+    display: none;
+  }
+  .mobile-filter-trigger,
+  .financial-actions button,
+  .sales-toggle,
+  .filter-calendar button {
+    appearance: none;
+    border: 0;
+    background: transparent;
+  }
+  .mobile-filter-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    text-align: start;
+    width: 100%;
+    min-height: 54px;
+    margin-bottom: var(--phone-gap);
+    padding: 5px 8px 5px 14px;
+    background: var(--ui-quiet);
+    border-radius: 16px;
+  }
+  .mobile-filter-trigger > span:first-child {
+    display: grid;
+    gap: 3px;
+  }
+  .mobile-filter-trigger strong {
+    font: 600 15px/1.2 var(--ui-font);
+  }
+  .mobile-filter-trigger small {
+    color: var(--ui-muted);
+    font: 400 13px/1.35 var(--ui-font);
+  }
+  .filter-icon {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    flex: none;
+    border-radius: 12px;
+    background: white;
+  }
+
+  .kpi-grid,
+  .analytics-grid,
+  .commercial-plan,
+  .overview {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--phone-gap);
+  }
+  .bento-card:not(.mini-card) {
+    --ui-card-inset: var(--phone-inset);
+  }
+  .hero-card {
+    min-height: clamp(202px, 53vw, 254px);
+    gap: 14px;
+  }
+  .hero-card .signal-open {
+    display: none;
+  }
+  .hero-card .signal-head h2 {
+    font-size: 19px;
+  }
+  .hero-num {
+    font-size: clamp(40px, 13.4cqw, 80px);
+  }
+  .hero-reading {
+    margin: auto 0;
+  }
+  .hero-bottom {
+    margin: 0;
+    gap: 12px 26px;
+  }
+  .hero-tax,
+  .hero-bottom dt {
+    font-size: 14px;
+  }
+  .financial-cards {
+    display: grid;
+    gap: 16px;
+    padding: var(--phone-inset);
+  }
+  .financial-cards::before {
+    display: block;
+  }
+  .financial-cards .mini-card {
+    padding: 0;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) max-content;
+    grid-template-areas: 'label value' 'caption value' 'plot plot';
+    align-items: center;
+    gap: 3px 10px;
+  }
+  .financial-cards .mini-card::before,
+  .financial-cards .signal-open,
+  .financial-cards .metric-trend {
+    display: none;
+  }
+  .financial-cards .signal-head {
+    grid-area: label;
+    min-height: 0;
+  }
+  .financial-cards .signal-head h2 {
+    font: 550 clamp(15px, 3.9vw, 19px) / 1.28 var(--ui-font);
+  }
+  .financial-cards .metric-value {
+    grid-area: value;
+    margin: 0;
+    font: 550 clamp(21px, 5.5vw, 31px) / 1.14 var(--ui-font);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.05em;
+  }
+  .financial-cards .metric-value small {
+    font-size: 0.7em;
+  }
+  .financial-cards .metric-caption {
+    grid-area: caption;
+    font-size: 13px;
+  }
+  .financial-cards:has([data-action='trends'][aria-expanded='true']) .metric-trend {
+    display: block;
+    grid-area: plot;
+    padding-block: 6px;
+  }
+  .financial-cards .kpi-trend-plot {
+    height: 50px;
+  }
+  .financial-actions {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0 8px;
+    padding-top: 5px;
+    border-top: 1px solid var(--ui-border);
+    margin-bottom: -7px;
+  }
+  .financial-actions button,
+  .sales-toggle,
+  .return-assumptions summary,
+  footer button,
+  .text-btn {
+    min-height: 44px;
+  }
+  .financial-actions button,
+  .sales-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font: 550 14px/1.2 var(--ui-font);
+    color: var(--ui-accent-ink);
+  }
+  .financial-actions button[aria-expanded='true'],
+  .sales-toggle[aria-expanded='true'] {
+    color: var(--ui-ink);
+  }
+  .sales-plan {
+    gap: 10px;
+  }
+  .sales-origin {
+    grid-template-columns: 1fr;
+    justify-items: start;
+    gap: 5px;
+  }
+  .sales-origin h2 {
+    margin-bottom: 8px;
+  }
+  .volume-reading {
+    font-size: 36px;
+  }
+  .volume-caption {
+    text-align: left;
+    font-size: 14px;
+  }
+  .sales-toggle {
+    justify-content: space-between;
+    padding-top: 8px;
+    border-top: 1px solid var(--ui-border);
+  }
+  .sales-toggle[aria-expanded='true'] .glyph,
+  .filter-month[open] summary .glyph {
+    transform: rotate(180deg);
+  }
+  .sales-toggle[aria-expanded='false'] + .sales-route {
+    display: none;
+  }
+  .return-assumptions summary {
+    align-content: center;
+  }
+  .payback-plan .chart-ranges button {
+    min-height: 44px;
+    font-size: 14px;
+    padding-inline: 12px;
+  }
+  .payback-plan .check-pair {
+    flex-wrap: wrap;
+    gap: 12px 20px;
+  }
+  .monthly-thresholds dl {
+    gap: 12px;
+  }
+  .mobile-nav {
+    display: grid;
+    grid-template-columns: 1fr 1.26fr 1fr;
+    padding: 5px max(10px, env(safe-area-inset-right)) calc(5px + env(safe-area-inset-bottom))
+      max(10px, env(safe-area-inset-left));
+  }
+  .mobile-nav a {
+    min-height: 50px;
+    flex-direction: column;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 14px;
+    font-size: 12px;
+  }
+  .mobile-nav .glyph {
+    width: 19px;
+    height: 19px;
+  }
+  footer {
+    flex-wrap: wrap;
+    padding-block: 12px 0;
+    gap: 2px 12px;
+  }
+
+  html:has(dialog[open]) {
+    overflow: hidden;
+  }
+  dialog {
+    position: fixed;
+    inset: auto 0 0;
+    margin: 0 auto;
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(100dvh - max(16px, env(safe-area-inset-top)));
+    padding: 0 max(var(--phone-inset), env(safe-area-inset-right))
+      calc(18px + env(safe-area-inset-bottom)) max(var(--phone-inset), env(safe-area-inset-left));
+    border-radius: 26px 26px 0 0;
+    overscroll-behavior: contain;
+    scroll-padding-block: 80px 22px;
+  }
+  .dialog-head {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    background: white;
+    padding: 16px 0 12px;
+    margin: 0 0 8px;
+  }
+  .dialog-head h2 {
+    font-size: clamp(20px, 5.6vw, 26px);
+  }
+  .dialog-metrics > div {
+    padding-block: 12px;
+    gap: 12px;
+  }
+  .dialog-metrics strong {
+    white-space: nowrap;
+    text-align: right;
+  }
+  .dialog-table {
+    max-height: none;
+    overflow: visible;
+  }
+  .dialog-table table,
+  .dialog-table tbody {
+    display: block;
+  }
+  .dialog-table thead {
+    position: absolute;
+    clip-path: inset(50%);
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+  .dialog-table tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 10px;
+    border-bottom: 1px solid var(--ui-border);
+    padding-block: 6px 12px;
+  }
+  .dialog-table .ui-table tbody tr > * {
+    padding: 0;
+    border: 0;
+    text-align: start;
+  }
+  .dialog-table tbody th {
+    grid-column: 1/-1;
+  }
+  .dialog-table .is-number::before {
+    display: block;
+    color: var(--ui-muted);
+    font: 400 13px/1.5 var(--ui-font);
+  }
+  .dialog-table tbody td:nth-child(2)::before {
+    content: 'Выручка, ₽';
+  }
+  .dialog-table tbody td:nth-child(3)::before {
+    content: 'Прибыль, ₽';
+  }
+  .primary-action {
+    min-height: 46px;
+    font-size: 15px;
+  }
+  .link-label input {
+    font-size: 16px;
+  }
+  .filter-form {
+    display: grid;
+    gap: 18px;
+  }
+  .filter-form fieldset {
+    padding: 0;
+    margin: 0;
+    min-width: 0;
+    border: 0;
+  }
+  .filter-form legend,
+  .filter-month summary {
+    font: 550 16px/1.4 var(--ui-font);
+  }
+  .filter-form legend {
+    padding: 0;
+    margin-bottom: 8px;
+  }
+  .filter-counts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 3px;
+    padding: 3px;
+    border-radius: 14px;
+    background: var(--ui-quiet);
+  }
+  .filter-option {
+    position: relative;
+    cursor: pointer;
+  }
+  .filter-option input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    cursor: pointer;
+  }
+  .filter-option > span {
+    display: grid;
+    min-height: 44px;
+    align-content: center;
+    text-align: center;
+    border-radius: 11px;
+    font-size: 16px;
+  }
+  .filter-option input:checked + span {
+    background: var(--ui-accent-soft);
+    color: var(--ui-accent-ink);
+  }
+  .filter-option input:focus-visible + span {
+    outline: 2px solid var(--ui-focus);
+    outline-offset: -2px;
+  }
+  .filter-plans {
+    display: grid;
+    gap: 4px;
+  }
+  .filter-plans .filter-option > span {
+    padding: 7px 12px;
+    text-align: start;
+  }
+  .filter-plans small {
+    color: var(--ui-muted);
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  .filter-month {
+    border-radius: 14px;
+    background: var(--ui-quiet);
+  }
+  .filter-month summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 50px;
+    padding: 9px 14px;
+    cursor: pointer;
+    list-style: none;
+  }
+  .filter-month summary::-webkit-details-marker {
+    display: none;
+  }
+  .filter-month summary span {
+    display: grid;
+    gap: 3px;
+  }
+  .filter-month summary strong {
+    font: 400 14px/1.3 var(--ui-font);
+    color: var(--ui-muted);
+  }
+  .filter-calendar {
+    padding: 0 9px 9px;
+    --picker-radius: 16px;
+    --picker-inset: 7px;
+  }
+  .filter-calendar .len-year-nav {
+    grid-template-columns: 44px 1fr 44px;
+  }
+  .filter-calendar button {
+    min-height: 44px;
+  }
+  .filter-calendar .len-month-cell[aria-pressed='true'] {
+    background: var(--ui-accent-soft);
+    color: var(--ui-accent-ink);
+  }
+  .filter-calendar button:disabled {
+    opacity: 0.4;
+  }
+  .apply-filters {
+    position: sticky;
+    bottom: -1px;
+    padding: 6px 0;
+    background: white;
+  }
+  .apply-filters button {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    border-radius: 13px;
+  }
+}
+
+@media (forced-colors: active) {
+  .filter-option input:checked + span {
+    outline: 2px solid Highlight;
+    outline-offset: -3px;
+  }
+}

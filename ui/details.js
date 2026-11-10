@@ -86,7 +86,31 @@ const policies = {
       'Половина заработанной с запуска прибыли постоянно остаётся в производстве. Уже выплаченные дивиденды уменьшают лимит следующего распределения.',
   },
 };
-const local = { group: 'all', machine: null, year: null };
+const local = { group: 'all', machine: null, year: null, allPrinters: false };
+const compact = window.matchMedia('(max-width: 700px)');
+const expanded = new Set();
+let activeDetails;
+
+function disclosure(key, title, content) {
+  return `<details class="d-disclosure" data-disclosure="${key}" ${expanded.has(key) ? 'open' : ''}>
+    <summary>${title}${chevron}</summary>${content}</details>`;
+}
+
+function selectField(action, label, items, value) {
+  return `<label class="d-select-field"><span>${esc(label)}</span><span class="d-select-wrap">
+    <select data-dv-select="${action}">${items
+      .map(
+        ([key, text]) =>
+          `<option value="${esc(key)}" ${key === value ? 'selected' : ''}>${esc(text)}</option>`,
+      )
+      .join('')}</select>${chevron}</span></label>`;
+}
+
+function metrics(items) {
+  return `<dl class="d-mobile-metrics">${items
+    .map(([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`)
+    .join('')}</dl>`;
+}
 function select(ctx) {
   const c = ctx.model.cases[ctx.state.scenario + '-' + ctx.state.portfolio];
   const m = c.months.find((row) => row.m === Number(ctx.state.month)) ?? c.months[0];
@@ -139,13 +163,18 @@ function capacityRing(used, available) {
     <span><strong>${percent(load)}</strong><small>занято</small></span>
   </div>`;
 }
-function machineCapacity(ctx, m) {
+function machineCapacity(ctx, m, warning) {
   const capacity = sum(m.groupCapacity);
   const loads = groups.map((g, i) => ratio(m.groupHours[i], m.groupCapacity[i]));
   const busiest = loads.indexOf(Math.max(...loads));
   const groupRows = groups
     .map((group, i) => {
       const count = ctx.model.printers.filter((p) => p.group === group.key).length;
+      if (compact.matches) {
+        return `<li><div><strong>${group.label}</strong><b>${percent(loads[i])}</b></div>
+          <p>${num(count)} маш. · ${hours(m.groupHours[i])} из ${hours(m.groupCapacity[i])}</p>
+          ${meter(loads[i], 'd-tone-' + i)}</li>`;
+      }
       return `<tr class="${i === busiest ? 'd-capacity-peak' : ''}">
       <th scope="row"><span>${group.label}</span><small>×${num(count)}</small></th>
       <td>${num(m.groupHours[i], 1)}</td><td>${num(m.groupCapacity[i], 1)}</td>
@@ -153,16 +182,18 @@ function machineCapacity(ctx, m) {
     </tr>`;
     })
     .join('');
+  const breakdown = compact.matches
+    ? disclosure('capacity', 'Загрузка по группам', `<ul class="d-group-list">${groupRows}</ul>${warning}`)
+    : `<table class="d-capacity-table"><caption class="d-sr-only">Машино-часы в выбранном месяце</caption>
+      <thead><tr><th scope="col">Группа</th><th scope="col">Занято, ч</th><th scope="col">Фонд, ч</th><th scope="col">Загрузка</th></tr></thead>
+      <tbody>${groupRows}</tbody></table>`;
   return `<section class="bento-card d-card d-resource d-util-card">
     <div class="d-resource-head"><h2>Загрузка парка</h2><span>${ctx.model.printers.length} машин</span></div>
     <div class="d-fleet-reading">
       ${capacityRing(m.printHours, capacity)}
       <dl class="d-cap-totals"><div><dt>Занято печатью</dt><dd>${hours(m.printHours)}</dd></div><div><dt>Свободно</dt><dd>${hours(Math.max(0, capacity - m.printHours))}</dd></div></dl>
     </div>
-    <table class="d-capacity-table"><caption class="d-sr-only">Машино-часы в выбранном месяце</caption>
-      <thead><tr><th scope="col">Группа</th><th scope="col">Занято, ч</th><th scope="col">Фонд, ч</th><th scope="col">Загрузка</th></tr></thead>
-      <tbody>${groupRows}</tbody>
-    </table>
+    ${breakdown}
     <p class="d-cap-insight">Самая загруженная группа — ${groups[busiest].label.toLowerCase()}. Резерв <b>${hours(Math.max(0, m.groupCapacity[busiest] - m.groupHours[busiest]))}</b>.</p>
   </section>`;
 }
@@ -178,19 +209,23 @@ function operatorCapacity(ctx, m) {
     'Приёмка и упаковка',
     'Дополнительная отделка',
   ];
+  const locations = `<dl class="d-work-locations">
+      <div><dt>Всего на площадке</dt><dd>${hours(booked + m.roundsHours)}</dd><small>включая ${hours(m.roundsHours)} на обходы</small></div>
+      <div><dt>У подрядчика</dt><dd>${hours(m.externalHours)}</dd><small>внешняя подготовка</small></div>
+    </dl>`;
+  const detail = `<dl class="d-breakdown">${breakdown.map((name, i) => `<div><dt>${name}</dt><dd>${hours(m.labor[i])}</dd></div>`).join('')}</dl>
+      <p class="d-note">В расчёте отделка требуется трети принятых партий. Обходы покрываются резервом рабочего графика. Время подготовки у подрядчика учитывается отдельно.</p>`;
   return `<section class="bento-card d-card d-resource d-work-card">
     <div class="d-resource-head"><h2>${people}</h2><span>${founders ? 'Двое в офисе' : 'График 6/1'}</span></div>
     <div class="d-work-reading"><strong>${hours(booked)}</strong><span>по заказам из ${hours(available)}</span></div>
     <div class="d-work-plot" aria-hidden="true"><i style="width:${Math.min(100, Math.max(0, share * 100))}%"></i></div>
     <div class="d-work-labels"><span><i></i>${percent(share)} занято</span><span>Свободно <b>${hours(Math.max(0, available - booked))}</b></span></div>
-    <dl class="d-work-locations">
-      <div><dt>Всего на площадке</dt><dd>${hours(booked + m.roundsHours)}</dd><small>включая ${hours(m.roundsHours)} на обходы</small></div>
-      <div><dt>У подрядчика</dt><dd>${hours(m.externalHours)}</dd><small>внешняя подготовка</small></div>
-    </dl>
-    <details class="d-disclosure"><summary>Состав работы по заказам ${chevron}</summary>
-      <dl class="d-breakdown">${breakdown.map((name, i) => `<div><dt>${name}</dt><dd>${hours(m.labor[i])}</dd></div>`).join('')}</dl>
-      <p class="d-note">В расчёте отделка требуется трети принятых партий. Обходы покрываются резервом рабочего графика. Время подготовки у подрядчика учитывается отдельно.</p>
-    </details>
+    ${compact.matches ? '' : locations}
+    ${disclosure(
+      'labor',
+      compact.matches ? 'Состав работ и обходы' : 'Состав работы по заказам',
+      (compact.matches ? locations : '') + detail,
+    )}
   </section>`;
 }
 function fleetRows(ctx, m, machines) {
@@ -206,6 +241,21 @@ function fleetRows(ctx, m, machines) {
       const open = printer.id === local.machine;
       const id = esc(printer.id),
         name = esc(printer.name);
+      if (compact.matches) {
+        return `<li class="d-mobile-record"><button type="button" data-dv-action="machine" data-dv-value="${id}"
+          aria-controls="d-row-${id}" aria-expanded="${open}">
+          <span class="d-record-title">${name}</span>${chevron}
+          <span class="d-record-sub"><strong>${rub(revenue)}</strong> · ${percent(load)} загрузки</span>
+        </button><div id="d-row-${id}" ${open ? '' : 'hidden'}>
+          <p class="d-record-context">${id.toUpperCase()} · ${group.label}</p>
+          ${metrics([
+            ['Занято в месяце', hours(busy)],
+            ['Свободно в месяце', hours(Math.max(0, cap - busy))],
+            ['Печать в день', hours(busy / days(m.date))],
+            ['Выручка на занятый час', rub(ratio(revenue, busy))],
+          ])}
+        </div></li>`;
+      }
       const row =
         '<tr class="d-fleet-row' +
         (open ? ' d-selected-row' : '') +
@@ -272,8 +322,9 @@ function fleetRows(ctx, m, machines) {
 function fleet(ctx, m) {
   const all = ctx.model.printers.map((printer, i) => ({ printer, i }));
   const selected = all.filter(({ printer }) => local.group === 'all' || printer.group === local.group);
-  const filters = [['all', 'Все'], ...groups.map((g) => [g.key, g.label])].map(([key, label]) =>
-    choice('group', key, label, local.group === key),
+  const groupOptions = [['all', 'Все группы'], ...groups.map((g) => [g.key, g.label])];
+  const filters = groupOptions.map(([key, label]) =>
+    choice('group', key, key === 'all' ? 'Все' : label, local.group === key),
   );
   const h = sum(selected.map(({ i }) => m.machineHours[i]));
   const revenue = sum(selected.map(({ i }) => m.machineRevenue[i]));
@@ -281,6 +332,23 @@ function fleet(ctx, m) {
     local.group === 'all'
       ? sum(m.groupCapacity)
       : m.groupCapacity[groups.findIndex((g) => g.key === local.group)];
+  if (compact.matches) {
+    const initialCount = 3;
+    const shown = local.allPrinters ? selected : selected.slice(0, initialCount);
+    const toggle =
+      selected.length > initialCount
+        ? `<button class="d-list-toggle" type="button" data-dv-action="allPrinters" data-dv-value="more"
+          aria-controls="d-printer-list" aria-expanded="${local.allPrinters}">
+          ${local.allPrinters ? 'Свернуть список' : 'Показать ещё ' + (selected.length - initialCount)}${chevron}</button>`
+        : '';
+    return `<section class="bento-card d-card d-registry"><h2>Принтеры</h2>
+      ${selectField('group', 'Группа принтеров', groupOptions, local.group)}
+      <p class="d-registry-total"><strong>${rub(revenue)}</strong> выручки без НДС</p>
+      <p class="d-record-context">${selected.length} маш. · ${hours(h)} · ${percent(ratio(h, capacity))} загрузки</p>
+      <ul class="d-records" id="d-printer-list">${fleetRows(ctx, m, shown)}</ul>${toggle}
+      ${disclosure('fleet-method', 'Как рассчитана выручка', '<p class="d-note">Выручка без НДС распределена по времени работы машин в принятых партиях. Внутри группы задания делятся поровну между совместимыми машинами. Загрузка учитывает график и простои.</p>')}
+    </section>`;
+  }
   return (
     '<section class="bento-card d-card d-registry"><div class="d-head"><div><h2>Принтеры</h2><p class="d-note">Выручка без НДС распределена по времени работы машин в принятых партиях.</p></div>' +
     segments('Группа принтеров', filters, 'd-fleet-filter') +
@@ -299,6 +367,20 @@ function fleet(ctx, m) {
   );
 }
 function batches(ctx, m) {
+  if (compact.matches) {
+    const items = ctx.model.profiles.map((profile, i) => {
+      const body = metrics([
+        ['Партий', num(m.profileOrders[i], 1)],
+        ['Часы печати', hours(profile.printHours * m.profileOrders[i])],
+        ['Маржинальный доход', rub(m.profileMargin[i])],
+      ]);
+      return `<li>${disclosure('batch-' + i, `<span class="d-record-title">Профиль ${esc(profile.id)}</span><span class="d-record-sub">${rub(m.profileRevenue[i])} выручки</span>`, body)}</li>`;
+    });
+    return `<section class="bento-card d-card"><h2>Состав партий</h2>
+      <p class="d-record-context">${num(m.orders, 1)} партий · ${num(m.materialKg, 1)} кг филамента</p>
+      <ul class="d-records d-batch-list">${items.join('')}</ul>
+      <p class="d-note d-table-note">Дробные партии в период разгона — месячный эквивалент отгрузок.</p></section>`;
+  }
   return (
     '<section class="bento-card d-card"><div class="d-head"><h2>Состав партий</h2><span class="d-head-unit">' +
     num(m.orders, 1) +
@@ -346,17 +428,33 @@ export function renderProduction(ctx) {
   return (
     '<div class="detail-view" data-detail-view="production">' +
     '<div class="d-top-grid">' +
-    machineCapacity(ctx, m) +
+    machineCapacity(ctx, m, warning) +
     operatorCapacity(ctx, m) +
     '</div>' +
-    warning +
+    (compact.matches ? '' : warning) +
     fleet(ctx, m) +
     batches(ctx, m) +
     '</div>'
   );
 }
 
-function personSelect(role) {
+function personSelect(role, policy) {
+  if (compact.matches) {
+    return `<div class="d-person-inputs">
+      ${selectField(
+        'role',
+        'Участник',
+        roles.map((r) => [r.key, r.key === 'lead' ? 'Инвестор · 1 млн ₽' : r.title]),
+        role.key,
+      )}
+      ${selectField(
+        'policy',
+        'Режим выплат',
+        Object.entries(policies).map(([key, p]) => [key, p.label]),
+        policy,
+      )}
+    </div>`;
+  }
   return `<div class="d-head d-person-head">
     <h2>Участник</h2>
     ${segments(
@@ -371,16 +469,22 @@ function policySelect(ctx, c) {
   const profit = c.months.reduce((total, row) => total + row.profit, ctx.model.meta.openingProfit);
   const distributed = c.policies[state.policy].totalGross;
   return `<section class="bento-card d-card d-policy"><h2>Распределение прибыли</h2>
-    ${segments(
-      'Регламент распределения прибыли',
-      Object.entries(policies).map(([key, v]) => choice('policy', key, v.label, state.policy === key)),
-      'd-policy-filter',
-    )}
+    ${
+      compact.matches
+        ? ''
+        : segments(
+            'Регламент распределения прибыли',
+            Object.entries(policies).map(([key, v]) =>
+              choice('policy', key, v.label, state.policy === key),
+            ),
+            'd-policy-filter',
+          )
+    }
     <div class="d-policy-result"><strong>${percent(ratio(distributed, profit))}</strong><span>прибыли распределяется за 5 лет</span></div>
     <div class="d-policy-bar" aria-hidden="true"><i style="width:${Math.min(100, Math.max(0, 100 * ratio(distributed, profit)))}%"></i></div>
     <dl class="d-policy-amounts"><div><dt>Участникам, до налога</dt><dd>${rub(distributed)}</dd></div><div><dt>Остаётся в ООО</dt><dd>${rub(profit - distributed)}</dd></div></dl>
     <p>${policies[state.policy].detail}</p>
-    <details class="d-disclosure"><summary>Условия выплаты ${chevron}</summary>
+    <details class="d-disclosure" data-disclosure="policy" ${expanded.has('policy') ? 'open' : ''}><summary>Условия выплаты ${chevron}</summary>
       <p class="d-note">Выплаты рассчитаны после погашения займа ${rub(ctx.model.meta.loanAmount)} и пополнения резервов. Даты требуют решения участников.</p>
     </details>
   </section>`;
@@ -397,7 +501,7 @@ function personKPIs(ctx, c, m, role) {
       : 'Взнос не покрыт в горизонте модели'
     : 'Доля в производственном ООО';
   const rate = profile.irr[role.idx];
-  return `<section class="bento-card d-card d-person-summary">${personSelect(role)}
+  return `<section class="bento-card d-card d-person-summary">${personSelect(role, ctx.state.policy)}
     <div class="d-person-kpis">
       <div class="d-person-cell d-person-hero"><h3>${hasCash ? 'Возврат взноса' : 'Доля управляющей компании'}</h3>
         <strong class="d-measure">${payback}</strong><p>${paybackDetail}</p></div>
@@ -524,29 +628,30 @@ function payoutLedger(c, m, role, policy) {
     const total = sum(mo.map((e) => e.policies[policy].payouts[role.idx] * role.fraction));
     const cum = end.policies[policy].cumPayouts[role.idx] * role.fraction,
       open = chosenYear === y;
-    yearRows.push(
-      '<tr' +
-        (open ? ' class="d-selected-row"' : '') +
-        '><th scope="row"><button class="d-ledger-year" type="button" data-dv-action="year" data-dv-value="' +
-        y +
-        '" aria-expanded="' +
-        open +
-        '" aria-controls="d-year-' +
-        y +
-        '">' +
-        chevron +
-        '<span>Год ' +
-        y +
-        '<small>' +
-        monthName(mo[0].date, true) +
-        ' — ' +
-        monthName(end.date, true) +
-        '</small></span></button></th><td class="is-number">' +
-        rub(total) +
-        '</td><td class="is-number">' +
-        rub(cum) +
-        '</td></tr>',
-    );
+    if (!compact.matches)
+      yearRows.push(
+        '<tr' +
+          (open ? ' class="d-selected-row"' : '') +
+          '><th scope="row"><button class="d-ledger-year" type="button" data-dv-action="year" data-dv-value="' +
+          y +
+          '" aria-expanded="' +
+          open +
+          '" aria-controls="d-year-' +
+          y +
+          '">' +
+          chevron +
+          '<span>Год ' +
+          y +
+          '<small>' +
+          monthName(mo[0].date, true) +
+          ' — ' +
+          monthName(end.date, true) +
+          '</small></span></button></th><td class="is-number">' +
+          rub(total) +
+          '</td><td class="is-number">' +
+          rub(cum) +
+          '</td></tr>',
+      );
     const paid = mo.filter((row) => row.policies[policy].payouts[role.idx] * role.fraction > 0.005);
     const body = paid.length
       ? '<dl>' +
@@ -562,6 +667,15 @@ function payoutLedger(c, m, role, policy) {
           .join('') +
         '</dl>'
       : '<p>В этом году распределений не запланировано.</p>';
+    if (compact.matches) {
+      yearRows.push(`<li class="d-mobile-record"><button type="button" data-dv-action="year" data-dv-value="${y}"
+        aria-expanded="${open}" aria-controls="d-year-${y}">
+        <span class="d-record-title">Год ${y} · ${rub(total)}</span>${chevron}
+        <span class="d-record-sub">${monthName(mo[0].date, true)} — ${monthName(end.date, true)}</span></button>
+        <div id="d-year-${y}" class="d-mobile-year" ${open ? '' : 'hidden'}>
+        ${metrics([['С запуска', rub(cum)]])}${body}</div></li>`);
+      continue;
+    }
     yearRows.push(
       '<tr id="d-year-' +
         y +
@@ -571,6 +685,10 @@ function payoutLedger(c, m, role, policy) {
         body +
         '</td></tr>',
     );
+  }
+  if (compact.matches) {
+    return `<section class="bento-card d-card"><h2>График выплат</h2>
+      <p class="d-record-context">Чистые дивиденды по годам</p><ul class="d-records">${yearRows.join('')}</ul></section>`;
   }
   return (
     '<section class="bento-card d-card"><div class="d-head"><h2>График выплат</h2><span class="d-head-unit">Чистые дивиденды, ₽</span></div><div class="ui-table-frame d-table-frame"><table class="ui-table d-ledger"><thead><tr><th scope="col">Период</th><th scope="col" class="is-number">За год</th><th scope="col" class="is-number">С запуска</th></tr></thead><tbody>' +
@@ -588,11 +706,69 @@ export function renderInvestors(ctx) {
     ${payoutLedger(c, m, role, policy)}</div>`;
 }
 
+function refreshDetails(panel, ctx) {
+  const parent = panel.parentElement;
+  panel.outerHTML =
+    panel.dataset.detailView === 'production' ? renderProduction(ctx) : renderInvestors(ctx);
+  const fresh = parent.querySelector('[data-detail-view]');
+  bindDetails(fresh, ctx);
+  return fresh;
+}
+
+compact.addEventListener('change', () => {
+  if (!activeDetails?.panel.isConnected) return;
+  const { panel, ctx } = activeDetails;
+  const el = document.activeElement;
+  const hadFocus = panel.contains(el);
+  const action = el.dataset.dvAction ?? el.dataset.dvSelect;
+  const value = el.dataset.dvValue ?? el.value;
+  const disclosureId = el.closest('[data-disclosure]')?.dataset.disclosure;
+  const fresh = refreshDetails(panel, ctx);
+  if (hadFocus) {
+    const target = action
+      ? fresh.querySelector(
+          `[data-dv-select="${action}"], [data-dv-action="${action}"][data-dv-value="${CSS.escape(value)}"]`,
+        )
+      : disclosureId
+        ? fresh.querySelector(`[data-disclosure="${disclosureId}"] summary`)
+        : el.matches('.d-chart-touch')
+          ? fresh.querySelector('.d-chart-touch')
+          : null;
+    (target ?? fresh.querySelector('button, select, summary'))?.focus({ preventScroll: true });
+  }
+});
+
 const bound = new WeakSet();
 export function bindDetails(root, ctx) {
   const panel = root.matches?.('[data-detail-view]') ? root : root.querySelector('[data-detail-view]');
   if (!panel || bound.has(panel)) return;
   bound.add(panel);
+  activeDetails = { panel, ctx };
+  panel.addEventListener(
+    'toggle',
+    (event) => {
+      const key = event.target.dataset.disclosure;
+      if (key) {
+        if (event.target.open) expanded.add(key);
+        else expanded.delete(key);
+      }
+    },
+    true,
+  );
+  panel.addEventListener('change', (event) => {
+    const control = event.target.closest('select[data-dv-select]');
+    if (!control) return;
+    const action = control.dataset.dvSelect;
+    const focus = `[data-dv-select="${action}"]`;
+    if (action === 'group') {
+      local.group = control.value;
+      local.machine = null;
+      local.allPrinters = false;
+      refreshDetails(panel, ctx).querySelector(focus)?.focus({ preventScroll: true });
+    } else {
+      ctx.update({ [action]: control.value }, { focus });
+    }
+  });
   const plot = panel.querySelector('.d-chart-touch');
   if (plot) {
     const { c, m } = select(ctx),
@@ -607,9 +783,7 @@ export function bindDetails(root, ctx) {
     const describe = (number) => {
       const row = c.months[number - 1];
       caption.firstElementChild.textContent = monthName(row.date);
-      caption.lastElementChild.textContent = rub(
-        row.policies[policy].cumPayouts[role.idx] * role.fraction,
-      );
+      caption.lastElementChild.textContent = rub(row.policies[policy].cumPayouts[role.idx] * role.fraction);
     };
     plot.addEventListener('pointermove', (e) => {
       if (e.pointerType !== 'touch') describe(hit(e));
@@ -633,8 +807,7 @@ export function bindDetails(root, ctx) {
     const control = event.target.closest('button[data-dv-action]');
     if (!control || !panel.contains(control)) return;
     const action = control.dataset.dvAction,
-      val = control.dataset.dvValue,
-      view = panel.dataset.detailView;
+      val = control.dataset.dvValue;
     if (action === 'policy' || action === 'role') {
       if (val !== ctx.state[action]) {
         ctx.update(
@@ -647,20 +820,25 @@ export function bindDetails(root, ctx) {
     if (action === 'group') {
       local.group = val;
       local.machine = null;
+      local.allPrinters = false;
+    } else if (action === 'allPrinters') {
+      local.allPrinters = !local.allPrinters;
     } else if (action === 'machine') {
       local.machine = local.machine === val ? null : val;
     } else if (action === 'year') {
       const year = Number(val);
       local.year = (local.year ?? Math.ceil(Number(ctx.state.month) / 12)) === year ? 0 : year;
     } else return;
-    const parent = panel.parentElement;
-    const wasDetailsOpen = panel.querySelector('.d-disclosure')?.open;
-    panel.outerHTML = view === 'production' ? renderProduction(ctx) : renderInvestors(ctx);
-    const fresh = parent.querySelector('[data-detail-view]');
-    bindDetails(fresh, ctx);
-    if (wasDetailsOpen && fresh.querySelector('.d-disclosure'))
-      fresh.querySelector('.d-disclosure').open = true;
+    const fresh = refreshDetails(panel, ctx);
     const target = fresh.querySelector('[data-dv-action="' + action + '"][data-dv-value="' + val + '"]');
-    target?.focus({ preventScroll: true });
+    if (!target) return;
+    target.focus({ preventScroll: true });
+    if (compact.matches) {
+      const box = target.getBoundingClientRect();
+      const navTop = document.querySelector('.mobile-nav')?.getBoundingClientRect().top ?? innerHeight;
+      if (box.top < 0 || box.bottom > navTop) {
+        target.scrollIntoView({ block: 'center', behavior: 'instant' });
+      }
+    }
   });
 }

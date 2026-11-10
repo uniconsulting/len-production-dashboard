@@ -865,191 +865,356 @@
     font-size: clamp(23px, 3.2vw, 30px);
   }
 }
-@media (max-width: 690px) {
-  .d-top-grid {
-    grid-template-columns: 1fr;
-  }
-  .d-person-kpis {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .d-person-cell {
-    padding: 16px;
-  }
-  .d-person-cell .d-measure {
-    font-size: clamp(22px, 4.4vw, 30px);
-  }
-  .d-person-hero {
-    grid-column: 1/-1;
-    display: grid;
-    grid-template-columns: 1fr auto;
-    align-items: center;
-    gap: 4px 12px;
-  }
-  .d-person-hero h3 {
-    grid-area: 1/1;
-  }
-  .d-person-hero p {
-    grid-area: 2/1;
-  }
-  .d-person-hero .d-measure {
-    grid-area: 1/2/3/3;
-    margin: 0;
-    font-size: 36px;
-  }
-  .d-fleet-table .d-machine-hours {
-    display: none;
-  }
-  .d-table-usage {
-    min-width: 55px;
-  }
-  .d-inline-metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-@media (max-width: 520px) {
+/* On phones each resource has a single reading; the detailed schedules open in place. */
+@media (max-width: 700px) {
   .detail-view {
-    --detail-pad: 18px;
-    gap: 12px;
+    --detail-pad: clamp(18px, 4.8vw, 26px);
+    --detail-gap: 16px;
   }
+
   .d-top-grid,
   .d-invest-grid {
-    gap: 12px;
+    grid-template-columns: minmax(0, 1fr);
   }
+
   .detail-view h2 {
-    font-size: 21px;
+    font-size: clamp(21px, 5.1vw, 25px);
+    line-height: 1.18;
   }
-  .d-head {
-    gap: 12px;
+
+  .d-resource-head {
+    gap: 6px 12px;
   }
-  .d-person-head {
-    align-items: flex-start;
+  .d-fleet-reading {
+    grid-template-columns: clamp(96px, 27vw, 124px) minmax(0, 1fr);
+    gap: clamp(14px, 4.8vw, 26px);
+    margin-block: 20px;
   }
-  .d-person-head .d-segments,
-  .d-fleet-filter {
-    width: 100%;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+
+  .d-load-ring strong {
+    font-size: clamp(20px, 5.1vw, 26px);
   }
-  .detail-view .d-segments button {
-    white-space: normal;
-    min-height: 40px;
-    padding-inline: 5px;
+  .d-cap-totals {
+    gap: 11px;
   }
-  .d-note,
-  .d-head-unit,
-  .d-table-note,
-  .d-person-cell p,
-  .d-disclosure .d-note {
+  .d-cap-totals > div {
+    display: block;
+  }
+  .d-cap-totals dt {
     font-size: 13px;
   }
-  .detail-view .d-policy .d-segments {
-    width: 100%;
-    display: grid;
-    grid-template-columns: 0.85fr 1.15fr;
+  .d-cap-totals dd {
+    font-size: clamp(20px, 5.6vw, 25px);
   }
-  .d-person-cell {
-    padding: 13px;
-    gap: 8px;
-  }
-  .d-person-cell h3 {
+  .detail-view .d-cap-insight {
+    order: 1;
+    margin: 0;
     font-size: 14px;
+    line-height: 1.48;
   }
-  .d-person-cell p {
-    font-size: 13px;
+  .d-util-card > .d-disclosure {
+    order: 2;
   }
-  .d-person-cell .d-measure {
-    font-size: clamp(21px, 5.4vw, 27px);
+
+  .detail-view .d-disclosure {
+    margin-top: 10px;
   }
-  .d-person-hero .d-measure {
-    font-size: 33px;
+  .detail-view .d-disclosure > summary,
+  .d-list-toggle {
+    width: 100%;
+    min-height: 46px;
+    justify-content: space-between;
+    font: 620 15px/1.4 var(--ui-font);
   }
-  .detail-view .d-table-frame th,
-  .detail-view .d-table-frame td {
-    padding: 10px 5px;
-    font-size: 13px;
+  .detail-view .d-disclosure > summary:focus-visible {
+    outline-offset: 0;
   }
-  .detail-view .d-table-frame thead th {
-    font-size: 12px;
+  .d-group-list,
+  .detail-view .d-records {
+    display: grid;
+    list-style: none;
+    padding: 0;
   }
-  .d-fleet-table .d-table-toggle,
-  .d-batch-table .d-batch-extra {
-    display: none;
+  .d-group-list {
+    gap: 18px;
   }
-  .d-fleet-table .d-table-money,
-  .d-fleet-table .d-machine-name strong {
-    font-size: 13px;
+  .d-group-list li > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    align-items: baseline;
   }
-  .d-machine-button {
-    gap: 6px;
+  .d-group-list strong,
+  .d-group-list b {
+    font-size: 15px;
   }
-  .d-machine-mark {
-    width: 3px;
+  .d-group-list p,
+  .d-record-context,
+  .d-record-sub {
+    color: var(--detail-quiet);
+    font-size: 14px;
+    line-height: 1.5;
   }
-  .d-machine-name small,
-  .d-ledger-year small {
-    font-size: 11px;
+  .d-group-list li > p {
+    margin: 4px 0 8px;
   }
-  .d-table-usage {
-    width: auto;
-    min-width: 48px;
-  }
-  .d-table-usage .d-meter {
-    max-width: 55px;
-  }
-  .d-chart-wrap,
-  .d-cash-svg {
-    min-height: 155px;
-  }
-  .d-chart-axis {
-    width: 47px;
-    font-size: 11px;
-  }
-  .d-chart-labels {
-    margin-left: 54px;
-    font-size: 11px;
-  }
-  .d-chart-caption b {
-    font-size: 16px;
-  }
-  .d-chart-key {
-    font-size: 12px;
+  .d-group-list .d-meter {
+    height: 4px;
   }
   .d-cap-note {
-    align-items: flex-start;
+    margin-block: 18px 4px;
+    padding: 0;
   }
-  .d-cap-note:before {
-    top: 7px;
+  .d-work-reading {
+    margin-block: 20px 14px;
   }
-}
-@media (max-width: 365px) {
-  .detail-view {
-    --detail-pad: 14px;
+  .d-work-reading strong {
+    font-size: clamp(36px, 9.6vw, 48px);
   }
-  .d-person-kpis {
-    grid-template-columns: 1fr;
+  .d-work-reading > span,
+  .d-work-labels {
+    font-size: 14px;
   }
-  .d-person-cell {
+  .d-work-plot {
+    height: 16px;
+  }
+  .d-work-labels {
+    margin-top: 10px;
+  }
+  .detail-view .d-work-locations {
+    padding: 8px 0 0;
+    gap: 14px;
+  }
+  .d-work-locations dt,
+  .d-work-locations small {
+    font-size: 13px;
+  }
+  .d-breakdown {
+    gap: 10px;
+  }
+  .d-work-card .d-disclosure .d-note {
+    margin: 6px 0;
+  }
+
+  .d-person-inputs {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+  .d-select-field {
+    display: grid;
+    gap: 5px;
+    min-width: 0;
+  }
+  .d-select-field > span:first-child {
+    color: var(--detail-quiet);
+    font: 520 14px/1.4 var(--ui-font);
+  }
+  .d-select-wrap {
+    display: block;
+    position: relative;
+  }
+  .d-select-wrap > .d-chevron {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+  .d-select-field select {
+    width: 100%;
+    border: 0;
+    border-radius: var(--ui-radius-control, 12px);
+    min-height: 46px;
+    color: var(--ui-ink);
+    background: var(--detail-inset);
+    padding: 10px 36px 10px 12px;
+    appearance: none;
+    cursor: pointer;
+    font: 600 16px/1.35 var(--ui-font);
+    text-overflow: ellipsis;
+  }
+  .d-select-field select:focus-visible {
+    outline: 2px solid var(--ui-focus);
+    outline-offset: 2px;
+  }
+
+  .d-registry .d-select-field {
+    margin: 17px 0 20px;
+  }
+  .detail-view .d-registry-total {
+    font-size: 14px;
+    color: var(--detail-quiet);
+    line-height: 1.5;
+  }
+  .d-registry-total strong {
+    color: var(--ui-ink);
+    font: 600 clamp(22px, 6vw, 29px) / 1.18 var(--ui-font);
+    letter-spacing: -0.045em;
+  }
+  .detail-view .d-record-context {
+    margin-top: 5px;
+  }
+  .detail-view .d-records {
+    margin-top: 15px;
+  }
+  .d-records > li + li {
+    border-top: 1px solid var(--detail-inset);
+  }
+  .d-mobile-record > button,
+  .d-batch-list .d-disclosure > summary {
+    display: grid;
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr) 20px;
+    grid-template-areas: 'title icon' 'sub icon';
     align-items: center;
+    gap: 3px 12px;
+    text-align: left;
+    padding: 14px 1px;
+    margin: 0;
+    border: 0;
+    background: transparent;
+    color: var(--ui-ink);
+    font: inherit;
+    cursor: pointer;
   }
-  .d-person-cell h3 {
-    grid-area: 1/1;
+  .d-record-title {
+    grid-area: title;
+    font: 620 16px/1.38 var(--ui-font);
   }
-  .d-person-cell p {
-    grid-area: 2/1/-1/-1;
+  .d-record-sub {
+    grid-area: sub;
   }
-  .d-person-cell .d-measure {
-    grid-area: 1/2;
+  .d-record-sub strong {
+    color: var(--ui-ink);
+    font-weight: 570;
+  }
+  .d-records .d-chevron {
+    grid-area: icon;
+    justify-self: end;
+    color: var(--detail-quiet);
+  }
+  .detail-view .d-mobile-record > button:focus-visible {
+    outline-offset: -2px;
+  }
+  .d-list-toggle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    background: var(--detail-inset);
+    color: var(--ui-ink);
+    border: 0;
+    border-radius: var(--ui-radius-control, 12px);
+    cursor: pointer;
+  }
+  .d-mobile-metrics,
+  .d-mobile-year dl {
+    display: grid;
+    padding: 8px 0 14px;
+    gap: 9px;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  .d-mobile-metrics > div,
+  .d-mobile-year dl > div {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 2px 12px;
+  }
+  .d-mobile-metrics dt,
+  .d-mobile-year dt {
+    color: var(--detail-quiet);
+  }
+  .d-mobile-metrics dd,
+  .d-mobile-year dd {
+    font-weight: 640;
+  }
+  .d-mobile-year p {
+    font-size: 14px;
+    color: var(--detail-quiet);
+    padding-bottom: 12px;
+  }
+  .detail-view .d-batch-list .d-disclosure {
     margin: 0;
   }
-  .d-person-hero .d-measure {
-    font-size: 27px;
+  .d-batch-list .d-record-sub {
+    font-weight: 500;
   }
-}
-@media (max-width: 365px) {
-  .detail-view .d-batch-table th,
-  .detail-view .d-batch-table td {
-    padding-inline: 3px;
+
+  .d-person-kpis {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    margin-top: 21px;
+  }
+  .d-person-cell {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+    padding: 16px 0 0;
+    border-radius: 0;
+  }
+  .d-person-cell h3 {
+    font-size: 15px;
+    line-height: 1.4;
+  }
+  .d-person-cell p {
+    font-size: 14px;
+    margin: 0;
+    line-height: 1.45;
+  }
+  .d-person-cell .d-measure {
+    font-size: clamp(23px, 5.8vw, 28px);
+    margin: 0;
+  }
+  .d-person-hero {
+    padding: 16px;
+    border-radius: 16px;
+    gap: 6px;
+    background: var(--ui-accent-soft);
+  }
+  .d-person-hero .d-measure {
+    font-size: clamp(36px, 10.4vw, 50px);
+  }
+  .d-policy {
+    grid-row: auto;
+  }
+  .d-policy-result {
+    margin-top: 18px;
+  }
+  .detail-view .d-policy-amounts {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .d-policy-amounts > div {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 12px;
+    justify-content: space-between;
+  }
+  .d-policy-amounts dt {
+    font-size: 14px;
+  }
+  .d-policy-amounts dd {
+    margin: 0;
+    font-size: 16px;
+  }
+
+  .d-chart-wrap,
+  .d-cash-svg {
+    min-height: 160px;
+  }
+  .d-chart-axis {
+    width: 46px;
+  }
+  .d-chart-labels {
+    margin-left: 53px;
+  }
+  .d-chart-key {
+    gap: 7px 12px;
   }
 }

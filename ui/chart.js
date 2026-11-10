@@ -82,8 +82,17 @@ export function chart(ctx) {
       .join('') +
     '</div></div>';
 
-  const legend =
-    '<div class="chart-labels"><span><i class="legend-bar"></i>Выручка</span><span><i class="legend-line"></i>Чистая прибыль</span></div>';
+  const selected = points[active];
+  const monthLabel = ctx.fullMonth(selected.date);
+  const legend = `<div class="chart-labels">
+    <div><span><i class="legend-bar"></i>Выручка</span><strong class="chart-selected-value">${money(selected.revenue)}</strong></div>
+    <div><span><i class="legend-line"></i>Чистая прибыль</span><strong class="chart-selected-value">${money(selected.profit)}</strong></div>
+  </div>`;
+  const stepper = `<div class="chart-month-stepper" role="group" aria-label="Выбор месяца">
+    <button type="button" data-chart-step="-1" aria-label="Предыдущий месяц" ${selected.m === 1 ? 'disabled' : ''}>${icon('right', 16)}</button>
+    <button type="button" class="chart-month-open" data-action="period-table" aria-haspopup="dialog" aria-label="Результаты по месяцам. Выбран ${monthLabel}">${icon('calendar', 16)} ${monthLabel}</button>
+    <button type="button" data-chart-step="1" aria-label="Следующий месяц" ${selected.m === cs.months.length ? 'disabled' : ''}>${icon('right', 16)}</button>
+  </div>`;
   return (
     '<section class="bento-card chart-card">' +
     header +
@@ -98,12 +107,13 @@ export function chart(ctx) {
     '" aria-valuenow="' +
     state.month +
     '" aria-valuetext="' +
-    ctx.fullMonth(cs.months[state.month - 1].date) +
+    monthLabel + ', выручка ' + money(selected.revenue) + ', чистая прибыль ' + money(selected.profit) +
     '" data-start="' +
     points[0].m +
     '" data-count="' +
     points.length +
-    '"><svg viewBox="0 0 ' +
+    '" style="--chart-month-x:' + (x(active) / W) * 100 + '%;--chart-profit-y:' + (y(selected.profit) / H) * 100 +
+    '%"><svg viewBox="0 0 ' +
     W +
     ' ' +
     H +
@@ -131,7 +141,7 @@ export function chart(ctx) {
           '</span>',
       )
       .join('') +
-    '</div></div><div class="chart-foot"><span>' +
+    '</div></div><div class="chart-foot">' + stepper + '<span class="chart-selected-desktop">' +
     icon('calendar', 14) +
     'Выбран ' +
     ctx.fullMonth(cs.months[state.month - 1].date, true) +
@@ -143,10 +153,18 @@ export function chart(ctx) {
 export function bindChart(root, ctx) {
   const area = root.querySelector('.chart-area');
   if (!area) return;
-  const points = chartRange(
-    ctx.state,
-    ctx.model.cases[ctx.state.scenario + '-' + ctx.state.portfolio].months,
-  );
+  const months = ctx.model.cases[ctx.state.scenario + '-' + ctx.state.portfolio].months;
+  const points = chartRange(ctx.state, months);
+  for (const button of root.querySelectorAll('[data-chart-step]')) {
+    button.onclick = () => {
+      const step = Number(button.dataset.chartStep);
+      const month = ctx.state.month + step;
+      if (month < 1 || month > months.length) return;
+      const canContinue = month + step >= 1 && month + step <= months.length;
+      const focus = `[data-chart-step="${canContinue ? step : -step}"]`;
+      ctx.update({ month }, { focus });
+    };
+  }
   const hit = (e) => {
     const b = area.getBoundingClientRect();
     return Math.max(

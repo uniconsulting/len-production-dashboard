@@ -1,6 +1,6 @@
 // Static counterpart of the Mieru SelectMenu: a trigger, a viewport-anchored
 // surface and an explicit focus return. No native select popup is involved.
-const plans = [
+export const plans = [
   { value: 'base', title: 'Рабочий план', hint: 'Полный спрос к 6-му месяцу' },
   { value: 'fast', title: 'Ускоренный план', hint: 'Полный спрос к 3-му месяцу, более высокие цены' },
 ];
@@ -167,7 +167,7 @@ function openPicker(button, ctx) {
   window.visualViewport?.addEventListener('resize', reposition, options);
 }
 
-function fillMonthPanel(panel, { state, months, fullMonth, icon }, commit, reposition, opts) {
+export function fillMonthPanel(panel, { state, months, fullMonth, icon }, commit, reposition, opts) {
   const record = (m) => months[m - 1];
   const yearOf = (m) => Number(record(m).date.slice(0, 4));
   const monthOf = (m) => Number(record(m).date.slice(5)) - 1;
@@ -213,7 +213,10 @@ function fillMonthPanel(panel, { state, months, fullMonth, icon }, commit, repos
       const btn = e.target.closest('button');
       if (btn?.dataset.year)
         switchYear(Number(btn.dataset.year), '[data-year="' + btn.dataset.year + '"]');
-      if (btn?.dataset.monthChoice) commit(Number(btn.dataset.monthChoice));
+      if (btn?.dataset.monthChoice) {
+        cursor = Number(btn.dataset.monthChoice);
+        commit(cursor);
+      }
     },
     opts,
   );

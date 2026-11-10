@@ -1,9 +1,11 @@
-import { kpiChart } from './ui/kpi-charts.js?v=3';
+import { filterSummary, openFilters } from './ui/mobile-filters.js?v=4';
+import { mobileBatchList } from './ui/mobile-overview.js?v=4';
+import { kpiChart } from './ui/kpi-charts.js?v=4';
 import { icon } from './ui/icons.js';
-import { chart, bindChart } from './ui/chart.js?v=3';
-import { renderPickers, bindPickers } from './ui/pickers.js?v=3';
-import { bindBento } from './ui/bento.js?v=3';
-import { renderProduction, renderInvestors, bindDetails } from './ui/details.js?v=3';
+import { chart, bindChart } from './ui/chart.js?v=4';
+import { renderPickers, bindPickers } from './ui/pickers.js?v=4';
+import { bindBento } from './ui/bento.js?v=4';
+import { renderProduction, renderInvestors, bindDetails } from './ui/details.js?v=4';
 
 const app = document.querySelector('#app'),
   dialog = document.querySelector('#dialog');
@@ -34,6 +36,7 @@ const allowed = {
   target: [24, 36],
 };
 const fmt = new Map();
+const expandedSections = { trends: false, funnel: false };
 function n(v, d = 0) {
   if (!Number.isFinite(v)) return '—';
   if (!fmt.has(d)) fmt.set(d, new Intl.NumberFormat('ru-RU', { maximumFractionDigits: d }));
@@ -116,6 +119,7 @@ function nav(mobile = false) {
 }
 function toolbar() {
   return (
+    filterSummary(ctx(), current().months[state.month - 1], batchNoun(state.portfolio)) +
     '<div class="toolbar"><div class="portfolio"><span id="portfolio-label">Партий в месяц</span><div class="ui-segmented" role="group" aria-labelledby="portfolio-label">' +
     allowed.portfolio
       .map(
@@ -164,8 +168,11 @@ function overview() {
     ' <small>₽</small></p><p class="metric-caption">' +
     explanation +
     '</p>' +
+    '<div class="metric-trend" id="trend-' +
+    type +
+    '">' +
     kpiChart(type, cs.months, state.month) +
-    '</section>';
+    '</div></section>';
   const kpis =
     metric('margin', 'Маржинальный доход', pct(r.margin / r.revenue) + ' от выручки', 'margin-card') +
     metric('profit', 'Чистая прибыль', pct(r.profit / r.revenue) + ' от выручки', 'profit-card');
@@ -199,7 +206,9 @@ function overview() {
       .join('') +
     '</div></section>';
   const batches =
-    '<section class="bento-card batch-card"><div class="card-head"><h2>Экономика партии</h2></div><div class="ui-table-frame"><table class="ui-table"><thead><tr><th scope="col">Профиль</th><th scope="col" class="is-number">Партий</th><th scope="col" class="is-number">Чек, ₽</th><th scope="col" class="is-number">Затраты¹, ₽</th><th scope="col" class="is-number">Маржа, ₽</th><th scope="col" class="is-number">Печать, ч</th><th scope="col" class="is-number">Труд, ч</th></tr></thead><tbody>' +
+    '<section class="bento-card batch-card"><div class="card-head"><h2>Экономика партии</h2></div>' +
+    mobileBatchList(ctx(), r) +
+    '<div class="ui-table-frame"><table class="ui-table"><thead><tr><th scope="col">Профиль</th><th scope="col" class="is-number">Партий</th><th scope="col" class="is-number">Чек, ₽</th><th scope="col" class="is-number">Затраты¹, ₽</th><th scope="col" class="is-number">Маржа, ₽</th><th scope="col" class="is-number">Печать, ч</th><th scope="col" class="is-number">Труд, ч</th></tr></thead><tbody>' +
     model.profiles
       .map((p, i) => {
         const q = r.profileOrders[i],
@@ -232,8 +241,13 @@ function overview() {
   return (
     '<div class="overview"><div class="kpi-grid">' +
     hero +
+    '<div class="financial-cards bento-card">' +
     kpis +
-    '</div><div class="analytics-grid">' +
+    `<div class="financial-actions"><button type="button" data-action="trends" aria-expanded="${expandedSections.trends}" aria-controls="trend-margin trend-profit">` +
+    icon('chart', 16) +
+    'Динамика</button><button type="button" data-action="pnl">Расчёт прибыли ' +
+    icon('arrowUpRight', 16) +
+    '</button></div></div></div><div class="analytics-grid">' +
     chart(ctx()) +
     fleet +
     '</div>' +
@@ -245,7 +259,7 @@ function overview() {
 function render() {
   document.title = labels[state.view] + ' · ЛËН Производство';
   const brand =
-    '<img class="brand-lockup" src="./assets/brand/len.svg?v=3" alt="ЛËН"><img class="brand-sign" src="./assets/brand/len-mark.svg" alt="">';
+    '<img class="brand-lockup" src="./assets/brand/len.svg?v=4" alt="ЛËН"><img class="brand-sign" src="./assets/brand/len-mark.svg" alt="">';
   const share =
     '<button type="button" class="share-btn" data-action="share" aria-label="Поделиться сценарием">' +
     icon('share', 18) +
@@ -253,7 +267,7 @@ function render() {
   const header =
     '<header class="mobile-header"><a data-view="overview" href="./" class="mobile-brand" aria-label="ЛËН Производство, обзор">' +
     brand +
-    '<span class="brand-name">Производство</span></a>' +
+    '</a>' +
     share +
     '</header>';
   const sidebar =
@@ -355,7 +369,8 @@ function commercialPlan(r, cs) {
     <section class="bento-card sales-plan">
       <div class="sales-origin"><h2>План продаж</h2><p class="volume-reading">${n(r.orders, 1)} <small>${batchNoun(r.orders)}</small></p>
         <p class="volume-caption">К отгрузке в этом месяце</p></div>
-      <div class="sales-route"><ol class="funnel">${funnel}</ol>
+      <button class="sales-toggle" type="button" data-action="funnel" aria-expanded="${expandedSections.funnel}" aria-controls="sales-route">Воронка продаж ${icon('chevron', 16)}</button>
+      <div id="sales-route" class="sales-route"><ol class="funnel">${funnel}</ol>
         <p class="sales-assumptions">В заказ переходят ${pct(model.meta.conversion, 0)} запросов. Доля повторных заказов — ${pct(model.meta.repeatShare, 0)}.</p></div>
     </section>
     ${returnPlan(cs)}
@@ -369,7 +384,7 @@ function batchNoun(value) {
       ? 'партии'
       : 'партий';
 }
-function profitDetails() {
+function profitDetails(trigger) {
   const r = current().months[state.month - 1],
     p = r.policies[state.policy];
   const rows = [
@@ -398,6 +413,7 @@ function profitDetails() {
       '</div><p class="table-note">Средний счёт клиенту с НДС 22% — ' +
       money(r.avgCheck * (1 + model.meta.vat)) +
       '. Прибыль начисляется по отгрузке, поступления зависят от сроков оплаты.</p>',
+    trigger,
   );
 }
 function termContent() {
@@ -442,8 +458,8 @@ function termContent() {
   );
 }
 let dialogTrigger;
-function openDialog(title, body) {
-  dialogTrigger = document.activeElement;
+function openDialog(title, body, trigger) {
+  dialogTrigger = trigger;
   dialog.innerHTML =
     '<div class="dialog-head"><h2 id="dialog-title">' +
     title +
@@ -454,7 +470,7 @@ function openDialog(title, body) {
   dialog.showModal();
   dialog.scrollTop = 0;
 }
-function openProfile(i) {
+function openProfile(i, trigger) {
   const r = current().months[state.month - 1],
     p = model.profiles[i],
     q = r.profileOrders[i],
@@ -476,9 +492,10 @@ function openProfile(i) {
         .map(([a, b]) => '<div><span>' + a + '</span><strong>' + b + '</strong></div>')
         .join('') +
       '</div>',
+    trigger,
   );
 }
-function periodTable() {
+function periodTable(trigger) {
   const c = current();
   openDialog(
     'Результаты по месяцам',
@@ -498,26 +515,35 @@ function periodTable() {
         )
         .join('') +
       '</tbody></table></div>',
+    trigger,
   );
 }
-function shareDialog() {
+function shareDialog(trigger) {
   openDialog(
     'Поделиться сценарием',
     '<p class="dialog-lead">Ссылка сохранит раздел, выбранный портфель, месяц и правило выплат.</p><label class="link-label">Публичная ссылка<input id="share-link" readonly></label><button class="primary-action" data-copy>' +
       icon('copy', 16) +
       'Скопировать ссылку</button><span class="copy-feedback" role="status"></span>',
+    trigger,
   );
   dialog.querySelector('#share-link').value = location.href;
 }
 dialog.addEventListener('click', async (e) => {
-  if (e.target === dialog || e.target.closest('[data-close]')) {
+  const bounds = dialog.getBoundingClientRect();
+  const outside =
+    e.target === dialog &&
+    (e.clientX < bounds.left ||
+      e.clientX > bounds.right ||
+      e.clientY < bounds.top ||
+      e.clientY > bounds.bottom);
+  if (outside || e.target.closest('[data-close]')) {
     dialog.close();
     return;
   }
   const go = e.target.closest('[data-goto]');
   if (go) {
     dialog.close();
-    update({ month: Number(go.dataset.goto) });
+    update({ month: Number(go.dataset.goto) }, { focus: '.chart-area' });
     return;
   }
   if (e.target.closest('[data-copy]')) {
@@ -556,17 +582,25 @@ app.addEventListener('click', (e) => {
     );
   if (b.dataset.span)
     update({ span: Number(b.dataset.span) }, { focus: '[data-span="' + b.dataset.span + '"]' });
-  if (b.dataset.profile !== undefined) openProfile(Number(b.dataset.profile));
-  if (b.dataset.action === 'pnl') profitDetails();
+  if (b.dataset.profile !== undefined) openProfile(Number(b.dataset.profile), b);
+  if (b.dataset.action === 'filters')
+    openFilters(dialog, openDialog, { ...ctx(), months: current().months }, allowed.portfolio, b);
+  if (b.dataset.action === 'trends' || b.dataset.action === 'funnel') {
+    const section = b.dataset.action;
+    expandedSections[section] = !expandedSections[section];
+    b.setAttribute('aria-expanded', String(expandedSections[section]));
+  }
+  if (b.dataset.action === 'pnl') profitDetails(b);
   if (b.dataset.action === 'target') {
     update({ target: Number(b.dataset.val) }, { focus: '[data-val="' + b.dataset.val + '"]' });
   }
-  if (b.dataset.action === 'terms') openDialog('Условия расчёта', termContent());
-  if (b.dataset.action === 'share') shareDialog();
-  if (b.dataset.action === 'period-table') periodTable();
+  if (b.dataset.action === 'terms') openDialog('Условия расчёта', termContent(), b);
+  if (b.dataset.action === 'share') shareDialog(b);
+  if (b.dataset.action === 'period-table') periodTable(b);
 });
 addEventListener('popstate', () => {
   if (!model) return;
+  if (dialog.open) dialog.close();
   state = read();
   render();
 });
