@@ -1,6 +1,6 @@
 import { filterSummary, openFilters } from './ui/mobile-filters.js?v=5';
 import { mobileBatchList } from './ui/mobile-overview.js?v=5';
-import { renderLead, bindLead } from './ui/reference-lead.js?v=8';
+import { renderLead, bindLead } from './ui/reference-lead.js?v=9';
 import { renderStrip } from './ui/reference-strip.js?v=8';
 import { renderAnalytics } from './ui/reference-analytics.js?v=8';
 import { icon } from './ui/icons.js';

@@ -101,9 +101,7 @@ function streamChart(model, rows, selected) {
     .join('');
   return `<div class="ref-stream" role="group" aria-label="Выручка без НДС по группам принтеров. Стрелки влево и вправо выбирают месяц.">
     <svg viewBox="0 0 1000 200" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-      <defs><linearGradient id="ref-stream-fade"><stop stop-color="#fff" stop-opacity=".16"/><stop offset=".26" stop-color="#fff"/></linearGradient>
-      <mask id="ref-stream-mask"><rect width="1000" height="200" fill="url(#ref-stream-fade)"/></mask></defs>
-      <g mask="url(#ref-stream-mask)">${paths}</g></svg><div class="ref-months">${buttons}</div></div>`;
+      ${paths}</svg><div class="ref-months">${buttons}</div></div>`;
 }
 
 function revenueCard(model, cs, r) {
