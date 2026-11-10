@@ -19,15 +19,21 @@ let dismissOpen;
 function trigger(id, text, label, glyph, popupType, icon) {
   return `<button type="button" id="${id}" class="len-picker-trigger"
       aria-label="${label}: ${text}" aria-haspopup="${popupType}" aria-expanded="false">
-      ${icon(glyph, 17)}<span>${text}</span><span class="len-picker-chevron">${icon('chevron', 14)}</span>
+      ${glyph ? icon(glyph, 17) : ''}<span>${text}</span><span class="len-picker-chevron">${icon('chevron', 14)}</span>
     </button>`;
 }
 
+export function choiceTrigger(id, label, value, choices, icon, glyph) {
+  const selected = choices.find((choice) => choice.value === value);
+  return trigger(id, selected?.title ?? '', label, glyph, 'listbox', icon);
+}
+
+const scenarioField = { key: 'scenario', label: 'Сценарий продаж', choices: plans };
+
 export function renderPickers({ state, months, fullMonth, icon }) {
-  const scenario = plans.find((plan) => plan.value === state.scenario);
   const selected = months.find((row) => row.m === state.month);
   return (
-    trigger('scenario', scenario.title, 'Сценарий продаж', 'settings', 'listbox', icon) +
+    choiceTrigger('scenario', scenarioField.label, state.scenario, plans, icon, 'settings') +
     trigger('month', fullMonth(selected.date), 'Расчётный месяц', 'calendar', 'dialog', icon)
   );
 }
@@ -55,13 +61,13 @@ function positionPanel(panel, button, minWidth) {
     (openBelow ? anchor.bottom + gap : anchor.top - gap - Math.min(desired, available)) + 'px';
 }
 
-function openPicker(button, ctx) {
+function openPicker(button, ctx, field) {
   if (button.getAttribute('aria-expanded') === 'true') {
     dismissOpen?.(true);
     return;
   }
   dismissOpen?.();
-  const monthPicker = button.id === 'month';
+  const monthPicker = !field;
   const { state, icon } = ctx;
   const panel = document.createElement('div');
   const abort = new AbortController();
@@ -69,7 +75,7 @@ function openPicker(button, ctx) {
   panel.id = 'len-popup-' + button.id;
   panel.className = 'len-picker-panel ' + (monthPicker ? 'len-month-panel' : 'len-plan-panel');
   panel.setAttribute('role', monthPicker ? 'dialog' : 'listbox');
-  panel.setAttribute('aria-label', monthPicker ? 'Выбор расчётного месяца' : 'Сценарий продаж');
+  panel.setAttribute('aria-label', monthPicker ? 'Выбор расчётного месяца' : field.label);
   button.setAttribute('aria-controls', panel.id);
   button.setAttribute('aria-expanded', 'true');
 
@@ -83,7 +89,7 @@ function openPicker(button, ctx) {
   }
   function commit(value) {
     close(true);
-    ctx.update({ [button.id]: value }, { focus: '#' + button.id });
+    ctx.update({ [field?.key ?? 'month']: value }, { focus: '#' + button.id });
   }
   dismissOpen = close;
   const reposition = () => positionPanel(panel, button, monthPicker ? 276 : 258);
@@ -93,20 +99,21 @@ function openPicker(button, ctx) {
   if (monthPicker) {
     fillMonthPanel(panel, ctx, commit, reposition, options);
   } else {
-    panel.innerHTML = plans
-      .map(
-        (plan) =>
-          `<button type="button" class="len-plan-option" role="option" aria-selected="${plan.value === state.scenario}" tabindex="-1" data-plan="${plan.value}">
-        <span><strong>${plan.title}</strong><small>${plan.hint}</small></span>
-        ${plan.value === state.scenario ? icon('check', 17) : ''}
-      </button>`,
-      )
+    const selected = state[field.key];
+    panel.innerHTML = field.choices
+      .map(({ value, title, hint }) => {
+        const current = value === selected;
+        return `<button type="button" class="len-plan-option" role="option" aria-selected="${current}" tabindex="-1" data-choice="${value}" ${field.key === 'scenario' ? `data-plan="${value}"` : ''}>
+          <span><strong>${title}</strong>${hint ? `<small>${hint}</small>` : ''}</span>
+          ${current ? icon('check', 17) : ''}
+        </button>`;
+      })
       .join('');
     panel.addEventListener(
       'click',
-      (e) => {
-        const choice = e.target.closest('[data-plan]');
-        if (choice) commit(choice.dataset.plan);
+      (event) => {
+        const option = event.target.closest('[data-choice]');
+        if (option) commit(option.dataset.choice);
       },
       options,
     );
@@ -257,15 +264,17 @@ export function fillMonthPanel(panel, { state, months, fullMonth, icon }, commit
   );
 }
 
+export function bindChoicePicker(button, ctx, field) {
+  button.addEventListener('click', () => openPicker(button, ctx, field));
+  button.addEventListener('keydown', (event) => {
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+    event.preventDefault();
+    if (button.getAttribute('aria-expanded') !== 'true') openPicker(button, ctx, field);
+  });
+}
+
 export function bindPickers(root, ctx) {
   dismissOpen?.();
-  for (const button of root.querySelectorAll('.len-picker-trigger')) {
-    button.addEventListener('click', () => openPicker(button, ctx));
-    button.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-        e.preventDefault();
-        if (button.getAttribute('aria-expanded') !== 'true') openPicker(button, ctx);
-      }
-    });
-  }
+  bindChoicePicker(root.querySelector('#scenario'), ctx, scenarioField);
+  bindChoicePicker(root.querySelector('#month'), ctx);
 }

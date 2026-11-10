@@ -1,4 +1,4 @@
-import { plans, fillMonthPanel } from './pickers.js?v=5';
+import { plans, fillMonthPanel } from './pickers.js?v=13';
 
 export function filterSummary({ state, icon, fullMonth }, month, batchLabel) {
   const plan = plans.find((entry) => entry.value === state.scenario).title;

@@ -1,4 +1,5 @@
-import { roles, policies } from './investor-options.js';
+import { roles, policies, investorFields } from './investor-options.js?v=13';
+import { choiceTrigger, bindChoicePicker } from './pickers.js?v=13';
 
 const commonFormats = new Map();
 function num(value, digits = 0) {
@@ -434,22 +435,15 @@ export function renderProduction(ctx) {
   );
 }
 
-function personSelect(role, policy) {
+function personSelect(role, ctx) {
   if (compact.matches) {
-    return `<div class="d-person-inputs">
-      ${selectField(
-        'role',
-        'Участник',
-        roles.map((r) => [r.key, r.key === 'lead' ? 'Инвестор · 1 млн ₽' : r.title]),
-        role.key,
-      )}
-      ${selectField(
-        'policy',
-        'Режим выплат',
-        Object.entries(policies).map(([key, p]) => [key, p.label]),
-        policy,
-      )}
-    </div>`;
+    const fields = Object.values(investorFields).map((field) => {
+      const id = 'investor-' + field.key;
+      const label = field.key === 'policy' ? 'Режим выплат' : field.label;
+      return `<div class="len-picker-field"><label for="${id}">${label}</label>
+        ${choiceTrigger(id, label, ctx.state[field.key], field.choices, ctx.icon)}</div>`;
+    });
+    return `<div class="d-person-inputs">${fields.join('')}</div>`;
   }
   return `<div class="d-head d-person-head">
     <h2>Участник</h2>
@@ -479,8 +473,9 @@ function policySelect(ctx, c) {
     <div class="d-policy-result"><strong>${percent(ratio(distributed, profit))}</strong><span>прибыли распределяется за 5 лет</span></div>
     <div class="d-policy-bar" aria-hidden="true"><i style="width:${Math.min(100, Math.max(0, 100 * ratio(distributed, profit)))}%"></i></div>
     <dl class="d-policy-amounts"><div><dt>Участникам, до налога</dt><dd>${rub(distributed)}</dd></div><div><dt>Остаётся в ООО</dt><dd>${rub(profit - distributed)}</dd></div></dl>
-    <p>${policies[state.policy].detail}</p>
+    ${compact.matches ? '' : `<p>${policies[state.policy].detail}</p>`}
     <details class="d-disclosure" data-disclosure="policy" ${expanded.has('policy') ? 'open' : ''}><summary>Условия выплаты ${chevron}</summary>
+      ${compact.matches ? `<p class="d-note">${policies[state.policy].detail}</p>` : ''}
       <p class="d-note">Выплаты рассчитаны после погашения займа ${rub(ctx.model.meta.loanAmount)} и пополнения резервов. Даты требуют решения участников.</p>
     </details>
   </section>`;
@@ -497,16 +492,33 @@ function personKPIs(ctx, c, m, role) {
       : 'Взнос не покрыт в горизонте модели'
     : 'Доля в производственном ООО';
   const rate = profile.irr[role.idx];
-  return `<section class="bento-card d-card d-person-summary">${personSelect(role, ctx.state.policy)}
-    <div class="d-person-kpis">
-      <div class="d-person-cell d-person-hero"><h3>${hasCash ? 'Возврат взноса' : 'Доля управляющей компании'}</h3>
-        <strong class="d-measure">${payback}</strong><p>${paybackDetail}</p></div>
-      <div class="d-person-cell"><h3>Выплачено с запуска</h3><strong class="d-measure">${rub(data.cumPayouts[role.idx] * role.fraction)}</strong>
-        <p>В выбранном месяце ${rub(data.payouts[role.idx] * role.fraction)}</p></div>
-      <div class="d-person-cell"><h3>${hasCash ? 'Годовая IRR за 5 лет' : 'Чистые выплаты за 5 лет'}</h3>
-        <strong class="d-measure">${hasCash ? (Number.isFinite(rate) ? percent(rate) : 'Не определена') : rub(profile.totalPayouts[role.idx] * role.fraction)}</strong>
-        <p>${hasCash ? 'Вклад ' + rub(role.cash) + ' · доля ' + percent(role.share) : 'Денежный вклад 0 ₽. Работа УК учитывается отдельно.'}</p></div>
-    </div>
+  const paid = rub(data.cumPayouts[role.idx] * role.fraction);
+  const thisMonth = rub(data.payouts[role.idx] * role.fraction);
+  const roleNote = hasCash
+    ? 'Вклад ' + rub(role.cash) + ' · доля ' + percent(role.share)
+    : 'Денежный вклад 0 ₽. Работа УК учитывается отдельно.';
+  const mobile = compact.matches;
+  const recoveryTitle = hasCash ? 'Возврат взноса' : mobile ? 'Доля УК' : 'Доля управляющей компании';
+  const rateTitle = hasCash
+    ? mobile
+      ? 'Годовая IRR'
+      : 'Годовая IRR за 5 лет'
+    : mobile
+      ? 'Чистые выплаты'
+      : 'Чистые выплаты за 5 лет';
+  const paybackCell = `<div class="d-person-cell d-person-hero">
+    <h3>${recoveryTitle}</h3>
+    <strong class="d-measure">${payback}</strong><p>${paybackDetail}</p></div>`;
+  const paidCell = `<div class="d-person-cell d-person-paid">
+    <h3>Выплачено с запуска</h3><strong class="d-measure">${paid}</strong>
+    <p>${mobile ? 'За месяц ·' : 'В выбранном месяце'} ${thisMonth}</p></div>`;
+  const rateCell = `<div class="d-person-cell d-person-rate">
+    <h3>${rateTitle}</h3>
+    <strong class="d-measure">${hasCash ? (Number.isFinite(rate) ? percent(rate) : 'Не определена') : rub(profile.totalPayouts[role.idx] * role.fraction)}</strong>
+    <p>${mobile ? 'За 5 лет' : roleNote}</p></div>`;
+  return `<section class="bento-card d-card d-person-summary" data-role="${role.key}">${personSelect(role, ctx)}
+    <div class="d-person-kpis">${compact.matches ? paidCell + paybackCell : paybackCell + paidCell}${rateCell}</div>
+    ${compact.matches ? `<p class="d-person-contribution">${roleNote}</p>` : ''}
     ${
       role.key === 'uk' && Number.isFinite(m.ownerWorkCredit)
         ? disclosure(
@@ -570,14 +582,16 @@ function payoutChart(c, m, role, policy) {
       ? `<circle cx="${xy(x(payback))}" cy="${xy(y(values[payback]))}" r="5.8" class="d-chart-return"><title>Возврат вклада · ${monthName(c.months[payback - 1].date)}</title></circle>`
       : '';
   const paybackCaption = returnPoint
-    ? `<span class="d-return-key"><i></i>Возврат · ${monthName(c.months[payback - 1].date, true)}</span>`
+    ? `<span class="d-return-key"><i></i>Возврат${compact.matches ? '' : ' · ' + monthName(c.months[payback - 1].date, true)}</span>`
     : '';
   const pt = values[m.m];
   return (
     '<section class="bento-card d-card d-cash-chart"><div class="d-head"><div><h2>Накопленные выплаты</h2><p class="d-note">' +
-    esc(role.full) +
+    (compact.matches ? 'За 5 лет' : esc(role.full)) +
     ' · после расчётного налога</p></div><div class="d-chart-key"><span><i></i>Выплаты</span>' +
-    (cash > 0 ? '<span><i class="d-dashed"></i>Денежный вклад</span>' : '') +
+    (cash > 0
+      ? `<span><i class="d-dashed"></i>${compact.matches ? 'Вклад' : 'Денежный вклад'}</span>`
+      : '') +
     paybackCaption +
     '</div></div>' +
     '<div class="d-chart-wrap"><div class="d-chart-axis" aria-hidden="true"><span>' +
@@ -680,7 +694,7 @@ function payoutLedger(c, m, role, policy) {
     if (compact.matches) {
       yearRows.push(`<li class="d-mobile-record"><button type="button" data-dv-action="year" data-dv-value="${y}"
         aria-expanded="${open}" aria-controls="d-year-${y}">
-        <span class="d-record-title">Год ${y} · ${rub(total)}</span>${chevron}
+        <span class="d-record-title">Год ${y}</span><strong class="d-year-total">${rub(total)}</strong>${chevron}
         <span class="d-record-sub">${monthName(mo[0].date, true)} — ${monthName(end.date, true)}</span></button>
         <div id="d-year-${y}" class="d-mobile-year" ${open ? '' : 'hidden'}>
         ${metrics([['С запуска', rub(cum)]])}${body}</div></li>`);
@@ -697,7 +711,7 @@ function payoutLedger(c, m, role, policy) {
     );
   }
   if (compact.matches) {
-    return `<section class="bento-card d-card"><h2>График выплат</h2>
+    return `<section class="bento-card d-card d-payout-years"><h2>График выплат</h2>
       <p class="d-record-context">Чистые дивиденды по годам</p><ul class="d-records">${yearRows.join('')}</ul></section>`;
   }
   return (
@@ -710,10 +724,14 @@ export function renderInvestors(ctx) {
   const { c, m } = select(ctx);
   const role = roles.find((item) => item.key === ctx.state.role) ?? roles[0];
   const policy = ctx.state.policy;
+  const chart = payoutChart(c, m, role, policy);
+  const ledger = payoutLedger(c, m, role, policy);
+  const distribution = policySelect(ctx, c);
+  const content = compact.matches
+    ? chart + ledger + distribution
+    : `<div class="d-invest-grid">${chart}${distribution}</div>${ledger}`;
   return `<div class="detail-view" data-detail-view="investors">
-    ${personKPIs(ctx, c, m, role)}
-    <div class="d-invest-grid">${payoutChart(c, m, role, policy)}${policySelect(ctx, c)}</div>
-    ${payoutLedger(c, m, role, policy)}</div>`;
+    ${personKPIs(ctx, c, m, role)}${content}</div>`;
 }
 
 function refreshDetails(panel, ctx) {
@@ -730,14 +748,17 @@ compact.addEventListener('change', () => {
   const { panel, ctx } = activeDetails;
   const el = document.activeElement;
   const hadFocus = panel.contains(el);
-  const action = el.dataset.dvAction ?? el.dataset.dvSelect;
-  const value = el.dataset.dvValue ?? el.value;
+  const action =
+    el.dataset.dvAction ??
+    el.dataset.dvSelect ??
+    (el.id.startsWith('investor-') ? el.id.slice('investor-'.length) : null);
+  const value = el.dataset.dvValue ?? (el.id.startsWith('investor-') ? ctx.state[action] : el.value);
   const disclosureId = el.closest('[data-disclosure]')?.dataset.disclosure;
   const fresh = refreshDetails(panel, ctx);
   if (hadFocus) {
     const target = action
       ? fresh.querySelector(
-          `[data-dv-select="${action}"], [data-dv-action="${action}"][data-dv-value="${CSS.escape(value)}"]`,
+          `#investor-${action}, [data-dv-select="${action}"], [data-dv-action="${action}"][data-dv-value="${CSS.escape(value)}"]`,
         )
       : disclosureId
         ? fresh.querySelector(`[data-disclosure="${disclosureId}"] summary`)
@@ -754,6 +775,11 @@ export function bindDetails(root, ctx) {
   if (!panel || bound.has(panel)) return;
   bound.add(panel);
   activeDetails = { panel, ctx };
+  if (compact.matches && panel.dataset.detailView === 'investors') {
+    for (const field of Object.values(investorFields)) {
+      bindChoicePicker(panel.querySelector('#investor-' + field.key), ctx, field);
+    }
+  }
   panel.addEventListener(
     'toggle',
     (event) => {

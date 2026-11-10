@@ -996,10 +996,6 @@
     margin: 6px 0;
   }
 
-  .d-person-inputs {
-    display: grid;
-    gap: 10px;
-  }
   .d-select-field {
     display: grid;
     gap: 5px;
@@ -1143,40 +1139,74 @@
     font-weight: 500;
   }
 
+  .d-person-inputs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 12px;
+  }
+  .d-person-inputs .len-picker-field {
+    min-width: 0;
+  }
+  .d-person-inputs .len-picker-trigger {
+    min-height: 44px;
+  }
   .d-person-kpis {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0;
-    margin-top: 21px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 17px 14px;
+    margin-top: 19px;
   }
   .d-person-cell {
-    display: flex;
-    align-items: flex-start;
-    flex-direction: column;
+    display: grid;
+    align-content: start;
     gap: 5px;
-    padding: 16px 0 0;
+    padding: 0;
     border-radius: 0;
+    background: transparent;
   }
   .d-person-cell h3 {
-    font-size: 15px;
-    line-height: 1.4;
+    font: 550 14px/1.35 var(--ui-font);
   }
-  .d-person-cell p {
-    font-size: 14px;
-    margin: 0;
-    line-height: 1.45;
+  .d-person-cell p,
+  .detail-view .d-person-contribution {
+    font: 400 13px/1.45 var(--ui-font);
+    color: var(--detail-quiet);
   }
   .d-person-cell .d-measure {
-    font-size: clamp(23px, 5.8vw, 28px);
     margin: 0;
+    font-size: clamp(21px, 5.6vw, 30px);
+    color: var(--ui-ink);
   }
-  .d-person-hero {
-    padding: 16px;
-    border-radius: 16px;
-    gap: 6px;
+  .d-person-cell.d-person-paid {
+    grid-column: 1 / -1;
+    gap: 7px;
     background: var(--ui-accent-soft);
+    border-radius: 16px;
+    padding: 15px 16px;
   }
-  .d-person-hero .d-measure {
-    font-size: clamp(36px, 10.4vw, 50px);
+  .d-person-paid .d-measure {
+    color: var(--ui-accent-ink);
+    font-size: clamp(29px, 8.4vw, 43px);
+    white-space: nowrap;
+  }
+  .d-person-rate {
+    padding-inline-start: 14px;
+    border-inline-start: 1px solid var(--detail-inset);
+  }
+  .detail-view .d-person-contribution {
+    margin-top: 14px;
+    padding-top: 11px;
+    border-top: 1px solid var(--detail-inset);
+  }
+  .d-payout-years .d-mobile-record > button {
+    grid-template-columns: minmax(0, 1fr) auto 16px;
+    grid-template-areas: 'title amount icon' 'sub sub icon';
+    column-gap: 9px;
+    padding-block: 13px;
+  }
+  .d-year-total {
+    grid-area: amount;
+    font: 600 16px/1.3 var(--ui-font);
+    white-space: nowrap;
   }
   .d-policy {
     grid-row: auto;
@@ -1209,13 +1239,56 @@
     min-height: 160px;
   }
   .d-chart-axis {
-    width: 46px;
+    white-space: nowrap;
+    width: 53px;
   }
   .d-chart-labels {
-    margin-left: 53px;
+    margin-left: 60px;
   }
   .d-chart-key {
     gap: 7px 12px;
+  }
+}
+
+@media (max-width: 440px) {
+  .d-person-inputs {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+  .d-person-inputs .len-picker-field {
+    display: grid;
+    grid-template-columns: minmax(82px, 0.69fr) minmax(0, 1.31fr);
+    align-items: center;
+    gap: 8px;
+  }
+  .d-person-inputs .len-picker-field > label {
+    font-size: 13px;
+    line-height: 1.35;
+  }
+  .d-person-inputs .len-picker-trigger > span:not(.len-picker-chevron) {
+    white-space: normal;
+    text-align: start;
+  }
+  [data-detail-view='investors'] .d-chart-labels span:nth-child(2),
+  [data-detail-view='investors'] .d-chart-labels span:nth-child(4) {
+    visibility: hidden;
+  }
+}
+@media (max-width: 350px) {
+  .d-person-kpis {
+    gap: 15px 9px;
+  }
+  .d-person-rate {
+    padding-inline-start: 9px;
+  }
+  .d-person-cell .d-measure {
+    font-size: 20px;
+  }
+  .d-person-paid .d-measure {
+    font-size: 29px;
+  }
+  .d-person-summary[data-role='uk'] .d-person-rate .d-measure {
+    font-size: 17px;
   }
 }
 

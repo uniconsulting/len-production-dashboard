@@ -23,44 +23,8 @@
   display: grid;
   gap: 10px 12px;
   min-width: 0;
-}
-
-.faq-controls {
   flex: 1.8 1 31rem;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.faq-controls label {
-  display: grid;
-  align-content: start;
-  gap: 5px;
-  min-width: 0;
-  color: var(--ui-muted);
-  font: 400 13px/1.4 var(--ui-font);
-}
-
-.faq-controls select {
-  box-sizing: border-box;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  min-height: 44px;
-  padding: 9px 12px;
-  border: 0;
-  border-radius: var(--ui-radius-control);
-  background-color: var(--ui-quiet);
-  color: var(--ui-ink);
-  font: 550 14px/1.4 var(--ui-font);
-  text-overflow: ellipsis;
-}
-
-.faq-controls select.ui-select {
-  padding-inline-end: 34px;
-}
-
-.faq-controls select:focus-visible {
-  outline: 2px solid var(--ui-focus);
-  outline-offset: 2px;
 }
 
 .faq-list {
@@ -153,10 +117,6 @@
     font-size: 16px;
   }
 
-  .faq-controls select {
-    font-size: 16px;
-  }
-
   .faq-answer {
     font-size: 14px;
   }
@@ -166,4 +126,54 @@
   .faq-item > summary svg {
     transition: none;
   }
+}
+
+.faq-sale-table {
+  width: 100%;
+  border-collapse: collapse;
+  font: var(--ui-body);
+  color: var(--ui-ink);
+  font-variant-numeric: tabular-nums;
+}
+.faq-sale-table caption {
+  text-align: left;
+  padding-block: 8px 4px;
+  color: var(--ui-muted);
+  font: var(--ui-caption);
+}
+.faq-sale-table :is(td, th) {
+  padding: 7px 4px;
+  text-align: end;
+}
+.faq-sale-table :is(td, th):first-child {
+  padding-inline-start: 0;
+  text-align: start;
+}
+.faq-sale-table thead th {
+  color: var(--ui-muted);
+  font-size: 13px;
+  font-weight: 400;
+}
+.faq-sale-table tbody tr {
+  border-top: 1px solid var(--ui-border);
+}
+.faq-sale-table tbody th {
+  font-weight: 400;
+}
+.sale-calculation > summary {
+  width: fit-content;
+  padding-block: 6px;
+  cursor: pointer;
+  color: var(--ui-accent-ink);
+}
+.sale-calculation :is(p, ul) {
+  margin-top: 8px;
+}
+.sale-calculation ul {
+  padding-inline-start: 20px;
+}
+.sale-calculation a {
+  color: var(--ui-accent-ink);
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
 }

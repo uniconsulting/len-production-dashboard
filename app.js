@@ -1,14 +1,14 @@
-import { filterSummary, openFilters } from './ui/mobile-filters.js?v=5';
+import { filterSummary, openFilters } from './ui/mobile-filters.js?v=13';
 import { mobileBatchList } from './ui/mobile-overview.js?v=5';
 import { renderLead, bindLead } from './ui/reference-lead.js?v=11';
 import { renderStrip } from './ui/reference-strip.js?v=11';
 import { renderAnalytics } from './ui/reference-analytics.js?v=11';
-import { renderFAQ, bindFAQ, rememberFAQ } from './ui/investor-faq.js?v=12';
+import { renderFAQ, bindFAQ, rememberFAQ } from './ui/investor-faq.js?v=13';
 import { icon } from './ui/icons.js';
 import { chart, bindChart } from './ui/chart.js?v=5';
-import { renderPickers, bindPickers } from './ui/pickers.js?v=5';
+import { renderPickers, bindPickers } from './ui/pickers.js?v=13';
 import { bindBento } from './ui/bento.js?v=11';
-import { renderProduction, renderInvestors, bindDetails } from './ui/details.js?v=12';
+import { renderProduction, renderInvestors, bindDetails } from './ui/details.js?v=13';
 
 const app = document.querySelector('#app'),
   dialog = document.querySelector('#dialog');
@@ -506,7 +506,7 @@ addEventListener('popstate', () => {
   render();
 });
 try {
-  const res = await fetch('./data/model.json?v=5');
+  const res = await fetch('./data/model.json?v=13');
   if (!res.ok) throw Error();
   model = await res.json();
   render();

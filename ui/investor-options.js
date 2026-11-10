@@ -40,3 +40,24 @@ export const policies = {
       'Половина заработанной с запуска прибыли постоянно остаётся в производстве. Уже выплаченные дивиденды уменьшают лимит следующего распределения.',
   },
 };
+
+export const investorFields = {
+  role: {
+    key: 'role',
+    label: 'Участник',
+    choices: roles.map(({ key, title, cash, share }) => ({
+      value: key,
+      title,
+      hint: `Доля ${(share * 100).toLocaleString('ru-RU')}% · ${cash ? 'вклад ' + cash.toLocaleString('ru-RU') + ' ₽' : 'вклад работой'}`,
+    })),
+  },
+  policy: {
+    key: 'policy',
+    label: 'Распределение прибыли',
+    choices: Object.entries(policies).map(([key, policy]) => ({
+      value: key,
+      title: policy.label,
+      hint: policy.detail,
+    })),
+  },
+};

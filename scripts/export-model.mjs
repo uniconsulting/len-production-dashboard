@@ -137,7 +137,7 @@ function readCase(target, pace) {
       6, 7, 8, 9, 10, 11, 12, 14, 27, 28, 29, 30, 32, 33, 34, 35, 37, 38, 39, 40, 42, 43, 44, 45, 47, 48,
       49, 50, 55, 56, 57, 60, 61, 71, 78, 88, ...(growth ? [93, 94, 95, 98, 99, 100, 101, 102] : []),
     ],
-    'P&L': [7, 8, 9, 10, 21, 24, 25, 26, 27, 28, 29, 44, ...(growth ? [30, 39, 40] : [])],
+    'P&L': [7, 8, 9, 10, 21, 24, 25, 26, 27, 28, 29, 30, 44, ...(growth ? [39, 40] : [])],
     Деньги: [7, 11, 17, 19, 27, 29, 30, 34, 36, 37, 39, 40, 51, 52, 64, 71, 82],
     Участники: [25, 35, 45, 55],
   };
@@ -312,6 +312,12 @@ function readCase(target, pace) {
     };
   }
   const result = { target: growth ? sum(mix) : target, pace, mix, months, policies, thresholds };
+  if (!growth) {
+    const valuationYear = months.filter((month) => month.date.startsWith('2028-'));
+    assert.equal(valuationYear.length, 12, 'December 2028 valuation needs twelve calendar months');
+    result.normalizedProfit2028 = sum(valuationYear.map((month) => ranges['P&L'][30][month.m]));
+    assert.ok(Number.isFinite(result.normalizedProfit2028), 'Missing 2028 economic profit');
+  }
   for (const [group, col] of [
     [1, 'C'],
     [2, 'E'],

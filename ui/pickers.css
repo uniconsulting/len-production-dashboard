@@ -201,3 +201,31 @@
     display: none;
   }
 }
+
+/* Reuse the toolbar picker as a labelled field inside a card. */
+.len-picker-field {
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  min-width: 0;
+}
+.len-picker-field > label {
+  color: var(--ui-muted);
+  font: 400 13px/1.4 var(--ui-font);
+}
+.len-picker-field > .len-picker-trigger {
+  width: 100%;
+  min-height: 44px;
+  padding-inline: 12px;
+  justify-content: space-between;
+  text-align: start;
+  background: var(--ui-quiet);
+}
+.len-picker-field > .len-picker-trigger[aria-expanded='true'] {
+  background: var(--ui-surface-hover);
+}
+@media (hover: hover) {
+  .len-picker-field > .len-picker-trigger:hover {
+    background: var(--ui-surface-hover);
+  }
+}

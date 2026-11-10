@@ -1,41 +1,16 @@
 import { investorReturns } from './faq-returns.js';
-import { roles, policies } from './investor-options.js';
-import { plans } from './pickers.js?v=5';
-
-// Both annual answers use the first full calendar year after the target December 2027.
-// Stocks are averaged between the start and end of each month (including December 2027).
-function year2028(plan, meta, policy) {
-  const opening = plan.months.find((row) => row.date === '2027-12');
-  const year = plan.months.filter((row) => row.date.startsWith('2028-'));
-  if (!opening || year.length !== 12) return null;
-  const closing = year.at(-1);
-  const total = (key) => year.reduce((sum, row) => sum + row[key], 0);
-  const averageBalance = (key) => (total(key) + (opening[key] - closing[key]) / 2) / year.length;
-  const revenue = total('revenue');
-  const days = total('days');
-  const cost = total('materialCost');
-  const equity =
-    meta.principal.reduce((sum, amount) => sum + amount, 0) + closing.policies[policy].retainedProfit;
-  return {
-    yearDays: days,
-    revenue,
-    equity,
-    // Receivables include VAT. Sales and material consumption in the P&L exclude it.
-    stockDays: cost > 0 ? (days * averageBalance('stock')) / cost : null,
-    collectionDays:
-      revenue > 0 ? (days * averageBalance('receivables')) / (revenue * (1 + meta.vat)) : null,
-  };
-}
+import { roles, policies, investorFields } from './investor-options.js?v=13';
+import { choiceTrigger, bindChoicePicker, plans } from './pickers.js?v=13';
+import { businessYear2028, comparables, saleMultiples } from './business-value.js?v=13';
 
 function turnoverAnswer(annual, { n, money }) {
-  if (!annual || annual.stockDays === null || annual.collectionDays === null) {
-    return '<p>Для расчёта денежного цикла нужны продажи, расход материала и остатки за полный год.</p>';
-  }
-  // The workbook assumes immediate supplier payment and models no work in progress.
-  const cycle = annual.stockDays + annual.collectionDays;
-  const turns = cycle > 0 ? ` Это около ${n(annual.yearDays / cycle, 1)} оборота в год.` : '';
-  return `<p>В 2028 году от оплаты материала до поступления денег от заказчиков проходит в среднем <strong>${n(cycle, 1)} дня</strong>.${turns}</p>
-    <p>Запас материала покрывает ${n(annual.stockDays, 1)} дня работы, ожидание оплаты после отгрузки занимает ещё ${n(annual.collectionDays, 1)} дня. Поставщикам платим без отсрочки. Расчёт использует средние остатки за год. Плановая выручка за год — ${money(annual.revenue)} без НДС.</p>`;
+  if (!annual) return '<p>Для ответа нужен полный календарный год работы производства.</p>';
+  const assetReading =
+    annual.assetTurns === null
+      ? ''
+      : `<p><strong>Оборачиваемость активов — ${n(annual.assetTurns, 2)} раза в год.</strong>
+    Каждый рубль в активах фермы приносит ${n(annual.assetTurns, 2)} ₽ выручки за год. В расчёте участвуют оборудование, материалы, деньги и задолженность клиентов. Средняя стоимость всех активов за 2028 год — ${money(annual.averageAssets)}.</p>`;
+  return `<p>По выбранному плану оборот всего производства за 2028 год составит <strong>${money(annual.revenue)}</strong> без НДС, в среднем ${money(annual.monthlySales)} в месяц.</p>${assetReading}`;
 }
 
 function firstAnswer(first, { state, money, fullMonth, model }) {
@@ -75,11 +50,45 @@ function earningsAnswer(period, role, { money, fullMonth }) {
   return `<p>${outcome} За первые 36 месяцев (${dates}) дивиденды на руки по плану составят ${money(period.paid)} при денежном вложении ${money(role.cash)}.</p><p>Здесь учтены только деньги, полученные участником. Стоимость доли можно посмотреть в следующем ответе.</p>`;
 }
 
-function valueAnswer(annual, role, { money, pct }) {
-  if (!annual || !Number.isFinite(annual.equity))
-    return '<p>Для расчёта нужен управленческий баланс на конец 2028 года.</p>';
-  return `<p>Рыночная цена доли пока неизвестна. По плановому балансу на 31 декабря 2028 года на долю ${pct(role.share)} приходится <strong>${money(annual.equity * role.share)} чистых активов</strong> «ЛËН Производство». По выбранной политике выплат в балансе всего ООО — ${money(annual.equity)} собственного капитала.</p>
-    <p>Для оценки цены продажи понадобятся фактическая прибыль, подтверждённые контракты и условия сделки. Оценки бренда и согласованной цены выкупа в модели нет.</p>`;
+function valueAnswer(annual, role, { n, money, pct }) {
+  if (!annual) return '<p>Для оценки продажи нужен полный год выручки и прибыли.</p>';
+  const methods = [
+    ['По выручке', annual.byRevenue],
+    ['По прибыли', annual.byProfit],
+  ].filter(([, price]) => Number.isFinite(price) && price > 0);
+  if (!methods.length)
+    return '<p>При этих результатах рассчитать положительную цену действующего производства по мультипликаторам не удаётся.</p>';
+  const mln = (value) => n(value / 1000000, 2);
+  const prices = methods.map(([, price]) => price);
+  const bounds = (fraction) => {
+    const low = mln(Math.min(...prices) * fraction);
+    const high = mln(Math.max(...prices) * fraction);
+    return (low === high ? low : low + '–' + high) + ' млн ₽';
+  };
+  const costOfOwners = Number.isFinite(annual.normalizedProfit)
+    ? annual.profit - annual.normalizedProfit
+    : null;
+  const profitBasis =
+    costOfOwners === null
+      ? 'Для оценки по прибыли требуется стоимость замены неоплаченной работы основателей.'
+      : `Из ${money(annual.profit)} чистой прибыли по плану вычитаем ${money(costOfOwners)} стоимости неоплаченной работы УК. Для покупателя остаётся ${money(annual.normalizedProfit)} за год.`;
+  const sourceLinks = comparables
+    .map(
+      (offer) =>
+        `<li><a href="${offer.url}" target="_blank" rel="noopener noreferrer">${offer.label}</a> · цена ${money(offer.price)}, выручка ${money(offer.revenue)} и прибыль ${money(offer.profit)} в месяц.</li>`,
+    )
+    .join('');
+  return `<p>Если план 2028 года выполнен, ориентир цены за 100% «ЛËН Производство» на 31 декабря — <strong>${bounds(1)}</strong>. При продаже всей компании на вашу долю ${pct(role.share)} приходится <strong>${bounds(role.share)}</strong> до налогов и расходов продавца.</p>
+    <table class="faq-sale-table"><caption>Расчёт цены, млн ₽</caption><thead><tr><th scope="col">Метод</th><th scope="col">Вся компания</th><th scope="col">Доля ${pct(role.share)}</th></tr></thead><tbody>
+    ${methods.map(([name, price]) => `<tr><th scope="row">${name}</th><td>${mln(price)}</td><td>${mln(price * role.share)}</td></tr>`).join('')}</tbody></table>
+    <p>Два ориентира рассчитаны по запрашиваемым ценам трёх российских 3D-производств. Фактические цены закрытия этих сделок неизвестны. При продаже отдельной доли цену согласуют с учётом прав и влияния её покупателя.</p>
+    <details class="sale-calculation"><summary>Как рассчитана стоимость</summary>
+      <p>К годовой выручке без НДС ${money(annual.revenue)} применяем коэффициент ${n(saleMultiples.revenue, 3)}×, к годовой прибыли с учётом работы УК — ${n(saleMultiples.profit, 3)}×. ${profitBasis}</p>
+      <p>В расчёте предполагаем, что покупателю передадут действующий парк, оборотный капитал, клиентские договоры и право работать под брендом «ЛËН Производство». Ценность бренда учтена через продажи и прибыль. Права на SaaS «ЛËН Автоматизация» остаются у отдельной компании.</p>
+      <p>В каждом методе к цене действующего производства прибавляем остаток денег сверх резервов (${money(annual.cashAfterReserves)}) и вычитаем остаток займа (${money(annual.debt)}). Необходимые резервы — ${money(annual.reserves)}. Уже выплаченные дивиденды учтены в расчёте заработка участника.</p>
+      <p>По каждому объявлению сопоставили цену с годовой выручкой и чистой прибылью. Для каждого метода взяли средний по порядку коэффициент из трёх. Предприятия различаются масштабом, каналами продаж и участием владельца. Остатки денег и порядок учёта НДС у продавцов раскрыты не полностью. Данные объявлений проверены 10 ноября 2026 года.</p>
+      <ul>${sourceLinks}</ul>
+    </details>`;
 }
 
 function salesAnswer({ r, fullMonth, n, pct, money, batchNoun }) {
@@ -97,26 +106,27 @@ function fundingAnswer({ model, money, pct }) {
 
 let openItem = 'cycle';
 
-function selectSetting(key, label, choices, current) {
-  const options = choices
-    .map(
-      ([value, text]) =>
-        `<option value="${value}" ${value === current ? 'selected' : ''}>${text}</option>`,
-    )
-    .join('');
-  return `<label><span>${label}</span><select class="ui-select" data-faq-setting="${key}">${options}</select></label>`;
+function faqSetting(field, state, icon) {
+  const id = 'faq-' + field.key;
+  return `<div class="len-picker-field"><label for="${id}">${field.label}</label>
+    ${choiceTrigger(id, field.label, state[field.key], field.choices, icon)}
+  </div>`;
 }
 
 export function renderFAQ(ctx) {
   const { state, cs, model, money, n, pct, icon } = ctx;
   const role = roles.find((option) => option.key === state.role);
   const result = investorReturns(cs, state.policy, role);
-  const annual = year2028(cs, model.meta, state.policy);
+  const annual = businessYear2028(cs, model.meta, state.policy);
   const scenario = plans.find((option) => option.value === state.scenario).title;
   const planName =
     state.scenario === 'growth' ? scenario : `${scenario} · ${n(state.portfolio)} партий в месяц`;
   const questions = [
-    ['cycle', 'Какая оборачиваемость у производства?', turnoverAnswer(annual, ctx)],
+    [
+      'cycle',
+      'Какой оборот у производства и сколько выручки приносит рубль активов?',
+      turnoverAnswer(annual, ctx),
+    ],
     [
       'start',
       'Когда начнутся выплаты и сколько я получу в первый раз?',
@@ -124,24 +134,19 @@ export function renderFAQ(ctx) {
     ],
     ['payback', 'Когда вернутся вложенные деньги?', paybackAnswer(result, role, ctx)],
     ['earnings', 'Сколько я заработаю за три года?', earningsAnswer(result.threeYears, role, ctx)],
-    ['value', 'Сколько будет стоить моя доля в 2028 году?', valueAnswer(annual, role, ctx)],
+    [
+      'value',
+      'За сколько можно продать бизнес и мою долю в конце 2028 года?',
+      valueAnswer(annual, role, ctx),
+    ],
     ['sales', 'Сколько заказов нужно для выполнения плана?', salesAnswer(ctx)],
     ['funding', 'Хватает ли стартовых денег на запуск?', fundingAnswer(ctx)],
   ];
   return `<section id="faq" class="bento-card faq-card" aria-labelledby="faq-title">
     <header class="faq-head"><h2 id="faq-title">Быстрые ответы</h2><p class="faq-context">${planName} · доля ${pct(role.share)} · денежный вклад ${money(role.cash)}</p></header>
-    <div class="faq-controls">${selectSetting(
-      'role',
-      'Участник',
-      roles.map((r) => [r.key, r.title]),
-      state.role,
-    )}
-      ${selectSetting(
-        'policy',
-        'Распределение прибыли',
-        Object.entries(policies).map(([key, p]) => [key, p.label]),
-        state.policy,
-      )}</div>
+    <div class="faq-controls">${Object.values(investorFields)
+      .map((field) => faqSetting(field, state, icon))
+      .join('')}</div>
     <div class="faq-list">${questions
       .map(
         ([id, question, answer]) =>
@@ -152,14 +157,10 @@ export function renderFAQ(ctx) {
   </section>`;
 }
 
-export function bindFAQ(slot, { update }) {
-  const faq = slot.querySelector('.faq-card');
-  faq.addEventListener('change', (event) => {
-    const select = event.target.closest('select[data-faq-setting]');
-    if (!select) return;
-    const key = select.dataset.faqSetting;
-    update({ [key]: select.value }, { focus: `[data-faq-setting="${key}"]` });
-  });
+export function bindFAQ(slot, ctx) {
+  for (const field of Object.values(investorFields)) {
+    bindChoicePicker(slot.querySelector('#faq-' + field.key), ctx, field);
+  }
 }
 
 // Read the live disclosure before a full dashboard render. The browser's
