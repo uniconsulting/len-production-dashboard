@@ -94,8 +94,10 @@
   font-size: 0.42em;
   letter-spacing: -0.035em;
 }
-.ref-board .strip-result h2 { color: #112b1e; }
-.ref-board .strip-result h2 button:hover { color: #051a0c; }
+.ref-board .strip-result h2,
+.ref-board .strip-result h2 button:hover {
+  color: #fff;
+}
 .strip-result .strip-amount {
   color: white;
   font-size: clamp(37px, 21cqw, 60px);
