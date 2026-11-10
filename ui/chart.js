@@ -23,8 +23,7 @@ function chartRange(state, rows) {
   return rows.slice(start, start + span);
 }
 export function chart(ctx) {
-  const { state, model, icon } = ctx;
-  const cs = model.cases[state.scenario + '-' + state.portfolio];
+  const { state, plan: cs, icon } = ctx;
   const points = chartRange(state, cs.months);
   const W = 660,
     H = 162;
@@ -107,12 +106,19 @@ export function chart(ctx) {
     '" aria-valuenow="' +
     state.month +
     '" aria-valuetext="' +
-    monthLabel + ', выручка ' + money(selected.revenue) + ', чистая прибыль ' + money(selected.profit) +
+    monthLabel +
+    ', выручка ' +
+    money(selected.revenue) +
+    ', чистая прибыль ' +
+    money(selected.profit) +
     '" data-start="' +
     points[0].m +
     '" data-count="' +
     points.length +
-    '" style="--chart-month-x:' + (x(active) / W) * 100 + '%;--chart-profit-y:' + (y(selected.profit) / H) * 100 +
+    '" style="--chart-month-x:' +
+    (x(active) / W) * 100 +
+    '%;--chart-profit-y:' +
+    (y(selected.profit) / H) * 100 +
     '%"><svg viewBox="0 0 ' +
     W +
     ' ' +
@@ -141,7 +147,9 @@ export function chart(ctx) {
           '</span>',
       )
       .join('') +
-    '</div></div><div class="chart-foot">' + stepper + '<span class="chart-selected-desktop">' +
+    '</div></div><div class="chart-foot">' +
+    stepper +
+    '<span class="chart-selected-desktop">' +
     icon('calendar', 14) +
     'Выбран ' +
     ctx.fullMonth(cs.months[state.month - 1].date, true) +
@@ -153,7 +161,7 @@ export function chart(ctx) {
 export function bindChart(root, ctx) {
   const area = root.querySelector('.chart-area');
   if (!area) return;
-  const months = ctx.model.cases[ctx.state.scenario + '-' + ctx.state.portfolio].months;
+  const months = ctx.plan.months;
   const points = chartRange(ctx.state, months);
   for (const button of root.querySelectorAll('[data-chart-step]')) {
     button.onclick = () => {

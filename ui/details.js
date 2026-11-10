@@ -112,7 +112,7 @@ function metrics(items) {
     .join('')}</dl>`;
 }
 function select(ctx) {
-  const c = ctx.model.cases[ctx.state.scenario + '-' + ctx.state.portfolio];
+  const c = ctx.plan;
   const m = c.months.find((row) => row.m === Number(ctx.state.month)) ?? c.months[0];
   return { c, m };
 }
@@ -163,6 +163,25 @@ function capacityRing(used, available) {
     <span><strong>${percent(load)}</strong><small>занято</small></span>
   </div>`;
 }
+function growthSchedule(ctx) {
+  const rows = ctx.plan.months
+    .slice(0, 13)
+    .map((row) => {
+      const selected = row.m === ctx.state.month;
+      const load = ratio(row.printHours, sum(row.groupCapacity));
+      return `<tr><th scope="row"><button type="button" class="text-btn" data-dv-action="month" data-dv-value="${row.m}" aria-pressed="${selected}">${monthName(row.date, true)}</button></th>
+      <td>${num(row.orders, 1)}</td><td>${percent(load)}</td></tr>`;
+    })
+    .join('');
+  return disclosure(
+    'growth-schedule',
+    'План роста до декабря 2027',
+    `<table class="d-capacity-table d-growth-schedule">
+    <thead><tr><th scope="col">Месяц</th><th scope="col">Партии</th><th scope="col">Загрузка</th></tr></thead>
+    <tbody>${rows}</tbody></table>`,
+  );
+}
+
 function machineCapacity(ctx, m, warning) {
   const capacity = sum(m.groupCapacity);
   const loads = groups.map((g, i) => ratio(m.groupHours[i], m.groupCapacity[i]));
@@ -182,11 +201,18 @@ function machineCapacity(ctx, m, warning) {
     </tr>`;
     })
     .join('');
+  const route = Number.isFinite(m.engineerSeriesShare)
+    ? `<p class="d-note d-route-share">Инженерные машины выполняют ${percent(m.engineerSeriesShare)} совместимых часов профилей B и D.</p>`
+    : '';
   const breakdown = compact.matches
-    ? disclosure('capacity', 'Загрузка по группам', `<ul class="d-group-list">${groupRows}</ul>${warning}`)
+    ? disclosure(
+        'capacity',
+        'Загрузка по группам',
+        `<ul class="d-group-list">${groupRows}</ul>${route}${warning}`,
+      )
     : `<table class="d-capacity-table"><caption class="d-sr-only">Машино-часы в выбранном месяце</caption>
       <thead><tr><th scope="col">Группа</th><th scope="col">Занято, ч</th><th scope="col">Фонд, ч</th><th scope="col">Загрузка</th></tr></thead>
-      <tbody>${groupRows}</tbody></table>`;
+      <tbody>${groupRows}</tbody></table>${route}`;
   return `<section class="bento-card d-card d-resource d-util-card">
     <div class="d-resource-head"><h2>Загрузка парка</h2><span>${ctx.model.printers.length} машин</span></div>
     <div class="d-fleet-reading">
@@ -194,6 +220,7 @@ function machineCapacity(ctx, m, warning) {
       <dl class="d-cap-totals"><div><dt>Занято печатью</dt><dd>${hours(m.printHours)}</dd></div><div><dt>Свободно</dt><dd>${hours(Math.max(0, capacity - m.printHours))}</dd></div></dl>
     </div>
     ${breakdown}
+    ${ctx.state.scenario === 'growth' ? growthSchedule(ctx) : ''}
     <p class="d-cap-insight">Самая загруженная группа — ${groups[busiest].label.toLowerCase()}. Резерв <b>${hours(Math.max(0, m.groupCapacity[busiest] - m.groupHours[busiest]))}</b>.</p>
   </section>`;
 }
@@ -201,7 +228,7 @@ function operatorCapacity(ctx, m) {
   const founders = m.m <= ctx.model.meta.ownersMonths;
   const people = founders ? 'Работа основателей' : 'Работа оператора';
   const available = m.laborCapacity,
-    booked = m.operatorHours;
+    booked = m.operatorHours - (m.ownerSupportHours ?? 0);
   const share = ratio(booked, available);
   const breakdown = [
     'Настройки и запуск через ЛËН',
@@ -209,17 +236,26 @@ function operatorCapacity(ctx, m) {
     'Приёмка и упаковка',
     'Дополнительная отделка',
   ];
+  const support =
+    !founders && ctx.state.scenario === 'growth'
+      ? `<p class="d-owner-support">Помощь основателей по партиям <strong>${hours(m.ownerSupportHours)} из ${hours(m.ownerSupportCapacity)}</strong></p>`
+      : '';
+  const contractor = Number.isFinite(m.contractorCapacity)
+    ? `из ${hours(m.contractorCapacity)} по плану`
+    : 'внешняя подготовка';
   const locations = `<dl class="d-work-locations">
-      <div><dt>Всего на площадке</dt><dd>${hours(booked + m.roundsHours)}</dd><small>включая ${hours(m.roundsHours)} на обходы</small></div>
-      <div><dt>У подрядчика</dt><dd>${hours(m.externalHours)}</dd><small>внешняя подготовка</small></div>
+      <div><dt>Всего на площадке</dt><dd>${hours(m.operatorHours + m.roundsHours)}</dd><small>включая ${hours(m.roundsHours)} на обходы</small></div>
+      <div><dt>У подрядчика</dt><dd>${hours(m.externalHours)}</dd><small>${contractor}</small></div>
     </dl>`;
   const detail = `<dl class="d-breakdown">${breakdown.map((name, i) => `<div><dt>${name}</dt><dd>${hours(m.labor[i])}</dd></div>`).join('')}</dl>
-      <p class="d-note">В расчёте отделка требуется трети принятых партий. Обходы покрываются резервом рабочего графика. Время подготовки у подрядчика учитывается отдельно.</p>`;
+      <p class="d-note">В расчёте отделка требуется трети принятых партий. Обходы покрываются резервом рабочего графика.</p>
+      ${m.ownerSupportHours > 0 ? `<p class="d-note">Дополнительный труд двух основателей по партиям оценён в ${rub(m.ownerSupportCost)} за месяц по ставке ${rub(m.ownerSupportCost / m.ownerSupportHours, 2)} за час. Стоимость учтена в экономической прибыли.</p>` : ''}`;
   return `<section class="bento-card d-card d-resource d-work-card">
     <div class="d-resource-head"><h2>${people}</h2><span>${founders ? 'Двое в офисе' : 'График 6/1'}</span></div>
     <div class="d-work-reading"><strong>${hours(booked)}</strong><span>по заказам из ${hours(available)}</span></div>
     <div class="d-work-plot" aria-hidden="true"><i style="width:${Math.min(100, Math.max(0, share * 100))}%"></i></div>
     <div class="d-work-labels"><span><i></i>${percent(share)} занято</span><span>Свободно <b>${hours(Math.max(0, available - booked))}</b></span></div>
+    ${support}
     ${compact.matches ? '' : locations}
     ${disclosure(
       'labor',
@@ -510,7 +546,21 @@ function personKPIs(ctx, c, m, role) {
       <div class="d-person-cell"><h3>${hasCash ? 'Годовая IRR за 5 лет' : 'Чистые выплаты за 5 лет'}</h3>
         <strong class="d-measure">${hasCash ? (Number.isFinite(rate) ? percent(rate) : 'Не определена') : rub(profile.totalPayouts[role.idx] * role.fraction)}</strong>
         <p>${hasCash ? 'Вклад ' + rub(role.cash) + ' · доля ' + percent(role.share) : 'Денежный вклад 0 ₽. Работа УК учитывается отдельно.'}</p></div>
-    </div></section>`;
+    </div>
+    ${
+      role.key === 'uk' && Number.isFinite(m.ownerWorkCredit)
+        ? disclosure(
+            'owner-credit',
+            'Учёт труда УК',
+            `
+      <dl class="d-breakdown"><div><dt>Зачтено с запуска</dt><dd>${rub(m.ownerWorkCredit)}</dd></div>
+      <div><dt>Остаток до лимита вклада</dt><dd>${rub(m.ownerWorkCreditRemaining)}</dd></div>
+      <div><dt>Оценка труда сверх лимита с запуска</dt><dd>${rub(m.ownerWorkAboveCredit)}</dd></div></dl>
+      <p class="d-note">Базовая оценка производственного часа основателей — ${rub(ctx.model.meta.ownerHourRate, 2)}. Модель индексирует ставку по годам. После достижения лимита ${rub(ctx.model.meta.ownerCreditLimit)} основатели продолжают работу без оплаты и дополнительного зачёта.</p>`,
+          )
+        : ''
+    }
+  </section>`;
 }
 
 function payoutChart(c, m, role, policy) {
@@ -783,7 +833,9 @@ export function bindDetails(root, ctx) {
     const describe = (number) => {
       const row = c.months[number - 1];
       caption.firstElementChild.textContent = monthName(row.date);
-      caption.lastElementChild.textContent = rub(row.policies[policy].cumPayouts[role.idx] * role.fraction);
+      caption.lastElementChild.textContent = rub(
+        row.policies[policy].cumPayouts[role.idx] * role.fraction,
+      );
     };
     plot.addEventListener('pointermove', (e) => {
       if (e.pointerType !== 'touch') describe(hit(e));
@@ -815,6 +867,10 @@ export function bindDetails(root, ctx) {
           { focus: '[data-dv-action="' + action + '"][data-dv-value="' + val + '"]' },
         );
       }
+      return;
+    }
+    if (action === 'month') {
+      ctx.update({ month: Number(val) }, { focus: `[data-dv-action="month"][data-dv-value="${val}"]` });
       return;
     }
     if (action === 'group') {

@@ -105,6 +105,8 @@ const meta = {
   payoutShare: source(47),
   firstPayoutAllowed: source(48),
   protectedDevelopmentTarget: source(52),
+  ownerCreditLimit: source(30),
+  ownerHourRate: source(72),
 };
 
 function summarize(months, policy) {
@@ -126,15 +128,16 @@ function policyMonth(state, gross, cash, totalProfit) {
   return { gross, cash, payouts, cumPayouts: [...state.cum], retainedProfit: totalProfit - state.sent };
 }
 function readCase(target, pace) {
-  write('Инвестору', 'C5', pace === 'base' ? 'Рабочий план' : 'Ускоренный план');
-  write('План производства', 'C7', target + (target === 22 ? ' партии' : ' партий'));
+  const growth = pace === 'growth';
+  write('Инвестору', 'C5', pace === 'fast' ? 'Ускоренный план' : 'Рабочий план');
+  write('План производства', 'C7', growth ? 'Рост до 80%+' : target + (target === 22 ? ' партии' : ' партий'));
   book.recalculate();
   const inputs = {
     Мощность: [
       6, 7, 8, 9, 10, 11, 12, 14, 27, 28, 29, 30, 32, 33, 34, 35, 37, 38, 39, 40, 42, 43, 44, 45, 47, 48,
-      49, 50, 55, 56, 57, 60, 61, 71, 78, 88,
+      49, 50, 55, 56, 57, 60, 61, 71, 78, 88, ...(growth ? [93, 94, 95, 98, 99, 100, 101, 102] : []),
     ],
-    'P&L': [7, 8, 9, 10, 21, 24, 25, 26, 27, 28, 29, 44],
+    'P&L': [7, 8, 9, 10, 21, 24, 25, 26, 27, 28, 29, 44, ...(growth ? [30, 39, 40] : [])],
     Деньги: [7, 11, 17, 19, 27, 29, 30, 34, 36, 37, 39, 40, 51, 52, 64, 71, 82],
     Участники: [25, 35, 45, 55],
   };
@@ -238,7 +241,19 @@ function readCase(target, pace) {
         orders,
         profiles.map((p) => p.externalHours),
       ),
-      laborCapacity: cap(71),
+      laborCapacity: cap(growth ? 93 : 71),
+      ...(growth ? {
+        ownerSupportHours: cap(98),
+        ownerSupportCapacity: cap(94),
+        ownerSupportCost: cap(99),
+        ownerSupportCashCost: cap(102),
+        contractorCapacity: cap(95),
+        engineerSeriesShare: cap(78),
+        economicProfit: pl(30),
+        ownerWorkCredit: pl(39),
+        ownerWorkCreditRemaining: Math.max(0, meta.ownerCreditLimit - pl(39)),
+        ownerWorkAboveCredit: pl(40),
+      } : {}),
       groupHours,
       groupCapacity,
       profileOrders: orders,
@@ -296,7 +311,7 @@ function readCase(target, pace) {
       margin: get('План производства', 'C52'),
     };
   }
-  const result = { target, pace, mix, months, policies, thresholds };
+  const result = { target: growth ? sum(mix) : target, pace, mix, months, policies, thresholds };
   for (const [group, col] of [
     [1, 'C'],
     [2, 'E'],
@@ -320,6 +335,12 @@ const cases = {};
 for (const pace of ['base', 'fast']) {
   for (const target of [22, 30, 40]) cases[pace + '-' + target] = readCase(target, pace);
 }
+cases.growth = readCase(null, 'growth');
+for (const month of cases.growth.months) {
+  assert.ok(month.operatorHours <= month.laborCapacity + month.ownerSupportCapacity + 1e-6);
+  assert.ok(month.externalHours <= month.contractorCapacity + 1e-6);
+  assert.ok(month.groupHours.every((hours, i) => hours <= month.groupCapacity[i] + 1e-6));
+}
 check(cases['base-30'].months[12].revenue, 1040760, 'audited plan');
 check(cases['base-40'].months[12].revenue, 1384740, 'audited expansion');
 check(cases['base-30'].policies.retained.totalPayouts[1], 2487782, 'audited protected policy', 1);
@@ -342,4 +363,4 @@ await writeFile(
   output,
   JSON.stringify(data, (_, v) => (typeof v === 'number' ? Number(v.toFixed(6)) : v)) + '\n',
 );
-console.log('Validated 6 portfolios, 60 months, 12 printers, 2 distribution policies.');
+console.log('Validated fixed portfolios and the growth plan, 60 months, 12 printers, 2 distribution policies.');

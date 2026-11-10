@@ -1,8 +1,17 @@
 // Static counterpart of the Mieru SelectMenu: a trigger, a viewport-anchored
 // surface and an explicit focus return. No native select popup is involved.
 export const plans = [
-  { value: 'base', title: 'Рабочий план', hint: 'Полный спрос к 6-му месяцу' },
-  { value: 'fast', title: 'Ускоренный план', hint: 'Полный спрос к 3-му месяцу, более высокие цены' },
+  {
+    value: 'growth',
+    title: 'План роста',
+    hint: 'От 30 партий в мае до загрузки выше 80% в декабре 2027 года',
+  },
+  { value: 'base', title: 'Постоянный объём', hint: 'Выбранный объём с мая 2027 года, базовые цены' },
+  {
+    value: 'fast',
+    title: 'Ускоренный старт',
+    hint: 'Постоянный объём с февраля 2027 года, повышенные цены',
+  },
 ];
 const monthLabels = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
 let dismissOpen;
@@ -18,7 +27,7 @@ export function renderPickers({ state, months, fullMonth, icon }) {
   const scenario = plans.find((plan) => plan.value === state.scenario);
   const selected = months.find((row) => row.m === state.month);
   return (
-    trigger('scenario', scenario.title, 'Темп роста и цены', 'settings', 'listbox', icon) +
+    trigger('scenario', scenario.title, 'Сценарий продаж', 'settings', 'listbox', icon) +
     trigger('month', fullMonth(selected.date), 'Расчётный месяц', 'calendar', 'dialog', icon)
   );
 }
@@ -60,7 +69,7 @@ function openPicker(button, ctx) {
   panel.id = 'len-popup-' + button.id;
   panel.className = 'len-picker-panel ' + (monthPicker ? 'len-month-panel' : 'len-plan-panel');
   panel.setAttribute('role', monthPicker ? 'dialog' : 'listbox');
-  panel.setAttribute('aria-label', monthPicker ? 'Выбор расчётного месяца' : 'Темп роста и цены');
+  panel.setAttribute('aria-label', monthPicker ? 'Выбор расчётного месяца' : 'Сценарий продаж');
   button.setAttribute('aria-controls', panel.id);
   button.setAttribute('aria-expanded', 'true');
 

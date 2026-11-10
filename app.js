@@ -1,11 +1,11 @@
-import { filterSummary, openFilters } from './ui/mobile-filters.js?v=4';
-import { mobileBatchList } from './ui/mobile-overview.js?v=4';
-import { kpiChart } from './ui/kpi-charts.js?v=4';
+import { filterSummary, openFilters } from './ui/mobile-filters.js?v=5';
+import { mobileBatchList } from './ui/mobile-overview.js?v=5';
+import { kpiChart } from './ui/kpi-charts.js?v=5';
 import { icon } from './ui/icons.js';
-import { chart, bindChart } from './ui/chart.js?v=4';
-import { renderPickers, bindPickers } from './ui/pickers.js?v=4';
-import { bindBento } from './ui/bento.js?v=4';
-import { renderProduction, renderInvestors, bindDetails } from './ui/details.js?v=4';
+import { chart, bindChart } from './ui/chart.js?v=5';
+import { renderPickers, bindPickers } from './ui/pickers.js?v=5';
+import { bindBento } from './ui/bento.js?v=5';
+import { renderProduction, renderInvestors, bindDetails } from './ui/details.js?v=5';
 
 const app = document.querySelector('#app'),
   dialog = document.querySelector('#dialog');
@@ -19,7 +19,7 @@ const navIcons = { overview: 'overview', production: 'production', investors: 'i
 const defaults = {
   view: 'overview',
   portfolio: 30,
-  scenario: 'base',
+  scenario: 'growth',
   policy: 'balance',
   month: 13,
   span: 24,
@@ -29,7 +29,7 @@ const defaults = {
 const allowed = {
   view: Object.keys(labels),
   portfolio: [22, 30, 40],
-  scenario: ['base', 'fast'],
+  scenario: ['growth', 'base', 'fast'],
   policy: ['balance', 'retained'],
   span: [12, 24, 60],
   role: ['lead', 'pair', 'one', 'uk'],
@@ -55,14 +55,21 @@ function sanitize(raw) {
     const v = typeof defaults[key] === 'number' ? Number(raw[key]) : raw[key];
     if (opts.includes(v)) out[key] = v;
   }
+  if (out.scenario === 'growth') out.portfolio = defaults.portfolio;
   const m = Number(raw.month);
   if (Number.isInteger(m) && m >= 1 && m <= 60) out.month = m;
   return out;
 }
-const read = () => sanitize(Object.fromEntries(new URL(location.href).searchParams));
+function read() {
+  const raw = Object.fromEntries(new URL(location.href).searchParams);
+  // Previously a shared fixed-volume case could specify only its portfolio.
+  if (!raw.scenario && allowed.portfolio.includes(Number(raw.portfolio))) raw.scenario = 'base';
+  return sanitize(raw);
+}
 let state = read(),
   model;
-const current = () => model.cases[state.scenario + '-' + state.portfolio];
+const current = () =>
+  model.cases[state.scenario === 'growth' ? 'growth' : state.scenario + '-' + state.portfolio];
 function urlFor(next) {
   const url = new URL(location.href);
   url.search = '';
@@ -86,7 +93,7 @@ function update(patch, opts = {}) {
   }
 }
 function ctx() {
-  return { state, model, update, money, n, pct, icon, fullMonth };
+  return { state, model, plan: current(), update, money, n, pct, icon, fullMonth };
 }
 function nav(mobile = false) {
   return (
@@ -118,24 +125,19 @@ function nav(mobile = false) {
   );
 }
 function toolbar() {
+  const plan = current();
+  const row = plan.months[state.month - 1];
+  const batchLabel = n(row.orders, 1) + ' ' + batchNoun(row.orders);
+  const volume =
+    state.scenario === 'growth'
+      ? `<div class="portfolio"><span>План на месяц</span><strong>${batchLabel}</strong></div>`
+      : `<div class="portfolio"><span id="portfolio-label">Партий после разгона</span>
+        <div class="ui-segmented" role="group" aria-labelledby="portfolio-label">
+          ${allowed.portfolio.map((v) => `<button type="button" data-portfolio="${v}" aria-pressed="${v === state.portfolio}">${v}</button>`).join('')}
+        </div></div>`;
   return (
-    filterSummary(ctx(), current().months[state.month - 1], batchNoun(state.portfolio)) +
-    '<div class="toolbar"><div class="portfolio"><span id="portfolio-label">Партий в месяц</span><div class="ui-segmented" role="group" aria-labelledby="portfolio-label">' +
-    allowed.portfolio
-      .map(
-        (v) =>
-          '<button type="button" data-portfolio="' +
-          v +
-          '" aria-pressed="' +
-          (v === state.portfolio) +
-          '">' +
-          v +
-          '</button>',
-      )
-      .join('') +
-    '</div></div><div class="toolbar-right">' +
-    renderPickers({ state, months: current().months, fullMonth, icon }) +
-    '</div></div>'
+    filterSummary(ctx(), row, batchLabel) +
+    `<div class="toolbar">${volume}<div class="toolbar-right">${renderPickers({ state, months: plan.months, fullMonth, icon })}</div></div>`
   );
 }
 function overview() {
@@ -259,7 +261,7 @@ function overview() {
 function render() {
   document.title = labels[state.view] + ' · ЛËН Производство';
   const brand =
-    '<img class="brand-lockup" src="./assets/brand/len.svg?v=4" alt="ЛËН"><img class="brand-sign" src="./assets/brand/len-mark.svg" alt="">';
+    '<img class="brand-lockup" src="./assets/brand/len.svg?v=5" alt="ЛËН"><img class="brand-sign" src="./assets/brand/len-mark.svg" alt="">';
   const share =
     '<button type="button" class="share-btn" data-action="share" aria-label="Поделиться сценарием">' +
     icon('share', 18) +
@@ -332,6 +334,14 @@ function returnPlan(cs) {
   const minimumPosition = (100 * threshold) / scale;
   const planPosition = (100 * planned) / scale;
   const gap = planned - threshold;
+  const sameMinimum =
+    cs.thresholds[24] &&
+    cs.thresholds[36] &&
+    Math.abs(cs.thresholds[24].revenue - cs.thresholds[36].revenue) < 0.01;
+  const bindingReserve =
+    state.scenario === 'growth' && sameMinimum
+      ? `<p class="table-note">Для обоих сроков минимальный чек задаёт резерв ${money(model.meta.startupReserve)} на конец декабря 2026 года.</p>`
+      : '';
   return `<section class="bento-card payback-plan">${head}
     <div class="payback-layout">
       <div class="price-comparison">
@@ -343,13 +353,14 @@ function returnPlan(cs) {
         <p class="price-difference">${gap >= 0 ? 'Запас по чеку' : 'До минимального чека'} <strong>${money(Math.abs(Math.round(gap)))}</strong></p>
       </div>
       <div class="monthly-thresholds">
-        <h3>Для ${n(cs.target)} партий в месяц</h3>
+        <h3>Декабрь 2027 · ${n(cs.months[12].orders, 1)} ${batchNoun(cs.months[12].orders)}</h3>
         <dl><div><dt>Выручка от</dt><dd>${money(Math.ceil(target.revenue))}</dd></div>
           <div><dt>Маржинальный доход от</dt><dd>${money(Math.ceil(target.margin))}</dd></div></dl>
       </div>
     </div>
+    ${bindingReserve}
     <details class="return-assumptions"><summary>Условия для инвестора с долей 33%</summary>
-      <p>Доля инвестора — 33%. Раз в квартал распределяется до 50% накопленного остатка прибыли. Чеки указаны без НДС. Выручка и маржинальный доход рассчитаны для полного объёма в декабре 2027 года.</p></details>
+      <p>Доля инвестора — 33%. Раз в квартал распределяется до 50% накопленного остатка прибыли. Чеки указаны без НДС. Порог предполагает единый коэффициент к ценам партий с запуска. Выручка и маржинальный доход показаны для объёма декабря 2027 года.</p></details>
     </section>`;
 }
 function commercialPlan(r, cs) {
@@ -398,7 +409,16 @@ function profitDetails(trigger) {
     ['Проценты по займу', -r.interest],
     ['Налог на прибыль', -r.profitTax],
     ['Чистая прибыль', r.profit],
+    ...(Number.isFinite(r.economicProfit)
+      ? [
+          ['Неоплаченный труд УК за месяц', -(r.profit - r.economicProfit)],
+          ['Экономическая прибыль с учётом труда УК', r.economicProfit],
+        ]
+      : []),
     ['Поступления клиентов без НДС', r.receipts],
+    ['Операционный денежный поток', r.opCashFlow],
+    ['Запас материалов на конец месяца', r.stock],
+    ['Дебиторская задолженность с НДС', r.receivables],
     ['Остаток денег с резервами', p.cash],
   ];
   const row = (a, b) => '<div><span>' + a + '</span><strong>' + money(b) + '</strong></div>';
@@ -433,15 +453,15 @@ function termContent() {
           pct(m.loanApr, 0) +
           ' годовых на ' +
           m.loanDue +
-          ' месяцев. Стоимость электромонтажа предстоит подтвердить. Если декабрьские оплаты поступят 31-го числа при равномерных расходах рабочего плана на 30 партий, потребуется ещё около 111 тыс. ₽ для сохранения стартового резерва.',
+          ' месяцев. Стоимость электромонтажа предстоит подтвердить. Потребность в оборотных средствах зависит от графика поступлений клиентов.',
       ],
       [
         'Портфель и цена',
-        '22, 30 и 40 партий — три цели продаж. Рабочий сценарий набирает спрос к шестому месяцу. Ускоренный достигает его к третьему месяцу и предполагает более высокие цены. Цены и выручка отражают отгрузку без НДС. На продажи заложено 20 тыс. ₽/мес. на старте с индексацией. Отдельного штата отдела продаж в модели нет.',
+        'План роста предусматривает 30 партий в мае 2027 года и загрузку парка выше 80% в декабре 2027 года. Для сравнения доступны планы с постоянным объёмом 22, 30 или 40 партий после разгона. Цены и выручка отражают отгрузку без НДС. На продажи заложено 20 тыс. ₽/мес. на старте с индексацией. Отдельного штата отдела продаж в модели нет.',
       ],
       [
         'Выпуск и труд',
-        'Первые шесть месяцев работают два основателя, суммарно 4 производственных часа в день. Затем — один оператор 6/1. Учтены централизованный запуск, обходы и дополнительная отделка в среднем у трети партий. Часы и цены требуют проверки на заказах.',
+        'Первые шесть месяцев работают два основателя, суммарно 4 производственных часа в день. Затем — один оператор 6/1. В плане роста основатели берут на себя часы сверх фонда оператора. Производственные часы УК засчитываются в согласованный лимит вклада. После его достижения основатели продолжают работу без оплаты и дополнительного зачёта. Учтены централизованный запуск, обходы и дополнительная отделка у трети партий. Часы и цены требуют проверки на заказах.',
       ],
       [
         'Политика выплат',
@@ -605,7 +625,7 @@ addEventListener('popstate', () => {
   render();
 });
 try {
-  const res = await fetch('./data/model.json');
+  const res = await fetch('./data/model.json?v=5');
   if (!res.ok) throw Error();
   model = await res.json();
   render();

@@ -1218,3 +1218,33 @@
     gap: 7px 12px;
   }
 }
+
+.detail-view .d-route-share {
+  margin-top: 10px;
+}
+.d-growth-schedule .text-btn {
+  min-height: 36px;
+}
+.d-growth-schedule .text-btn[aria-pressed='true'] {
+  color: var(--ui-accent-ink);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.detail-view .d-owner-support {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 14px;
+  font: var(--ui-caption);
+}
+.d-owner-support strong {
+  white-space: nowrap;
+  color: var(--ui-ink);
+}
+@media (pointer: coarse) {
+  .d-growth-schedule .text-btn {
+    min-height: 44px;
+  }
+}
