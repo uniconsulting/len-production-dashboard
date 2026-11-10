@@ -1,8 +1,9 @@
+import { kpiChart } from './ui/kpi-charts.js?v=3';
 import { icon } from './ui/icons.js';
-import { chart, bindChart } from './ui/chart.js?v=2';
-import { renderPickers, bindPickers } from './ui/pickers.js?v=2';
-import { bindBento } from './ui/bento.js?v=2';
-import { renderProduction, renderInvestors, bindDetails } from './ui/details.js?v=2';
+import { chart, bindChart } from './ui/chart.js?v=3';
+import { renderPickers, bindPickers } from './ui/pickers.js?v=3';
+import { bindBento } from './ui/bento.js?v=3';
+import { renderProduction, renderInvestors, bindDetails } from './ui/details.js?v=3';
 
 const app = document.querySelector('#app'),
   dialog = document.querySelector('#dialog');
@@ -133,29 +134,10 @@ function toolbar() {
     '</div></div>'
   );
 }
-function spark(series, type) {
-  const values = series.map((r) => r[type]),
-    lo = Math.min(0, ...values),
-    hi = Math.max(...values, lo + 1),
-    w = 112,
-    h = 29;
-  const coords = values.map(
-    (v, i) =>
-      ((i * w) / Math.max(1, values.length - 1)).toFixed(1) +
-      ',' +
-      (h - 2 - ((v - lo) / (hi - lo)) * (h - 5)).toFixed(1),
-  );
-  return (
-    '<svg viewBox="0 0 112 31" preserveAspectRatio="none" class="spark" aria-hidden="true"><path d="M' +
-    coords.join(' L') +
-    '" fill="none" stroke="currentColor" stroke-width="1.8" vector-effect="non-scaling-stroke"/></svg>'
-  );
-}
 function overview() {
   const cs = current(),
     r = cs.months[state.month - 1],
     capacity = r.groupCapacity.reduce((a, b) => a + b, 0);
-  const ks = cs.months.slice(0, state.month);
   const pnlButton =
     '<button type="button" class="signal-open" data-action="pnl" aria-label="Открыть расчёт прибыли за месяц">' +
     icon('arrowUpRight', 18) +
@@ -181,9 +163,9 @@ function overview() {
     n(r[type]) +
     ' <small>₽</small></p><p class="metric-caption">' +
     explanation +
-    '</p><div class="metric-history">' +
-    spark(ks, type) +
-    '</div></section>';
+    '</p>' +
+    kpiChart(type, cs.months, state.month) +
+    '</section>';
   const kpis =
     metric('margin', 'Маржинальный доход', pct(r.margin / r.revenue) + ' от выручки', 'margin-card') +
     metric('profit', 'Чистая прибыль', pct(r.profit / r.revenue) + ' от выручки', 'profit-card');
@@ -256,14 +238,14 @@ function overview() {
     fleet +
     '</div>' +
     batches +
-    salesCards(r, cs) +
+    commercialPlan(r, cs) +
     '</div>'
   );
 }
 function render() {
   document.title = labels[state.view] + ' · ЛËН Производство';
   const brand =
-    '<img class="brand-lockup" src="./assets/brand/len.svg?v=2" alt="ЛËН"><img class="brand-sign" src="./assets/brand/len-mark.svg" alt=""><span class="brand-name">Производство</span>';
+    '<img class="brand-lockup" src="./assets/brand/len.svg?v=3" alt="ЛËН"><img class="brand-sign" src="./assets/brand/len-mark.svg" alt="">';
   const share =
     '<button type="button" class="share-btn" data-action="share" aria-label="Поделиться сценарием">' +
     icon('share', 18) +
@@ -271,7 +253,7 @@ function render() {
   const header =
     '<header class="mobile-header"><a data-view="overview" href="./" class="mobile-brand" aria-label="ЛËН Производство, обзор">' +
     brand +
-    '</a>' +
+    '<span class="brand-name">Производство</span></a>' +
     share +
     '</header>';
   const sidebar =
@@ -279,7 +261,7 @@ function render() {
     brand +
     '</a>' +
     nav() +
-    '<div class="side-bottom"><button data-action="terms">' +
+    '<div class="side-bottom"><button type="button" data-action="terms" aria-label="Условия расчёта" title="Условия расчёта">' +
     icon('info', 19) +
     '<span>Условия расчёта</span></button><div class="side-context">' +
     icon('pin', 15) +
@@ -316,50 +298,76 @@ function render() {
   if (state.view === 'overview') bindChart(slot, ctx());
   else bindDetails(slot, ctx());
 }
-function renderReturnPlan(target, { state, n, money }) {
-  const switcher = [24, 36]
+function returnPlan(cs) {
+  const target = cs.thresholds?.[state.target];
+  const choices = [24, 36]
     .map(
-      (v) =>
-        '<button type="button" data-action="target" data-val="' +
-        v +
-        '" aria-pressed="' +
-        (v === state.target) +
-        '">' +
-        v +
-        ' мес.</button>',
+      (months) =>
+        `<button type="button" data-action="target" data-val="${months}" aria-pressed="${state.target === months}">${months} мес.</button>`,
     )
     .join('');
-  const figures = target
-    ? '<p class="goal-num">' +
-      money(target.avgCheck) +
-      '</p><p class="metric-caption">Минимальный средний чек без НДС</p><dl class="goal-breakdown"><div><dt>Выручка за месяц</dt><dd>' +
-      n(Math.ceil(target.revenue)) +
-      ' ₽</dd></div><div><dt>Маржинальный доход</dt><dd>' +
-      n(Math.ceil(target.margin)) +
-      ' ₽</dd></div></dl>'
-    : '<p>При выбранном портфеле цель недостижима.</p>';
-  return (
-    '<section class="bento-card sales-card return-card"><div class="card-head"><h2>Возврат 1 млн ₽</h2><div class="chart-ranges" role="group" aria-label="Целевой срок возврата">' +
-    switcher +
-    '</div></div>' +
-    figures +
-    '<p class="table-note">Доля инвестора — 33%. Каждый квартал можно выплатить до половины накопленной прибыли. Нормы рассчитаны для декабря 2027 года.</p></section>'
-  );
+  const head = `<div class="card-head return-heading"><h2>Возврат 1 млн ₽</h2>
+    <div class="chart-ranges" role="group" aria-label="Целевой срок возврата">${choices}</div></div>`;
+  if (!target)
+    return `<section class="bento-card payback-plan">${head}<p>При выбранном портфеле цель недостижима.</p></section>`;
+
+  // The reverse model is evaluated at full monthly demand (December 2027).
+  const planned = cs.months[12].avgCheck;
+  const threshold = target.avgCheck;
+  const scale = Math.max(threshold, planned, 1) * 1.12;
+  const minimumPosition = (100 * threshold) / scale;
+  const planPosition = (100 * planned) / scale;
+  const gap = planned - threshold;
+  return `<section class="bento-card payback-plan">${head}
+    <div class="payback-layout">
+      <div class="price-comparison">
+        <dl class="check-pair">
+          <div><dt>Минимальный чек</dt><dd class="goal-num">${money(threshold)}</dd></div>
+          <div><dt>Плановый чек</dt><dd>${money(planned)}</dd></div>
+        </dl>
+        <div class="price-track" style="--minimum:${minimumPosition}%;--planned:${planPosition}%" aria-hidden="true"><i></i><b></b></div>
+        <p class="price-difference">${gap >= 0 ? 'Запас по чеку' : 'До минимального чека'} <strong>${money(Math.abs(Math.round(gap)))}</strong></p>
+      </div>
+      <div class="monthly-thresholds">
+        <h3>Для ${n(cs.target)} партий в месяц</h3>
+        <dl><div><dt>Выручка от</dt><dd>${money(Math.ceil(target.revenue))}</dd></div>
+          <div><dt>Маржинальный доход от</dt><dd>${money(Math.ceil(target.margin))}</dd></div></dl>
+      </div>
+    </div>
+    <details class="return-assumptions"><summary>Условия для инвестора с долей 33%</summary>
+      <p>Доля инвестора — 33%. Раз в квартал распределяется до 50% накопленного остатка прибыли. Чеки указаны без НДС. Выручка и маржинальный доход рассчитаны для полного объёма в декабре 2027 года.</p></details>
+    </section>`;
 }
-function salesCards(r, cs) {
-  const target = cs.thresholds?.[state.target];
+function commercialPlan(r, cs) {
   const steps = [
-    [r.theoryLeads, 'Запросы'],
-    [r.offers, 'Предложения'],
-    [r.newOrders, 'Новые заказы'],
+    ['Квалифицированные запросы', r.theoryLeads],
+    ['Коммерческие предложения', r.offers],
+    ['Новые заказы', r.newOrders],
   ];
-  return (
-    '<div class="sales-grid"><section class="bento-card sales-card"><h2>План продаж</h2><dl class="sales-steps">' +
-    steps.map(([v, name]) => '<div><dt>' + name + '</dt><dd>' + n(v) + '</dd></div>').join('') +
-    '</dl><p class="goal-detail">Конверсия запроса в заказ — 20%. Половина заказов приходится на повторные продажи.</p></section>' +
-    renderReturnPlan(target, ctx()) +
-    '</div>'
-  );
+  const funnel = steps
+    .map(
+      ([label, value]) => `<li>
+    <div class="funnel-reading"><span>${label}</span><strong>${n(value)}</strong></div>
+    <div class="funnel-track" aria-hidden="true"><i style="width:${(100 * value) / Math.max(1, r.theoryLeads)}%"></i></div></li>`,
+    )
+    .join('');
+  return `<div class="commercial-plan">
+    <section class="bento-card sales-plan">
+      <div class="sales-origin"><h2>План продаж</h2><p class="volume-reading">${n(r.orders, 1)} <small>${batchNoun(r.orders)}</small></p>
+        <p class="volume-caption">К отгрузке в этом месяце</p></div>
+      <div class="sales-route"><ol class="funnel">${funnel}</ol>
+        <p class="sales-assumptions">В заказ переходят ${pct(model.meta.conversion, 0)} запросов. Доля повторных заказов — ${pct(model.meta.repeatShare, 0)}.</p></div>
+    </section>
+    ${returnPlan(cs)}
+  </div>`;
+}
+function batchNoun(value) {
+  const category = new Intl.PluralRules('ru').select(Math.round(10 * value) / 10);
+  return category === 'one'
+    ? 'партия'
+    : category === 'few' || category === 'other'
+      ? 'партии'
+      : 'партий';
 }
 function profitDetails() {
   const r = current().months[state.month - 1],

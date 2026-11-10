@@ -1,33 +1,9 @@
-/* Mieru palette, typographic roles and geometry; LEN's body + heading pairing. */
+/* Self-hosted type and the shared Mieru presentation roles. */
 @font-face {
   font-family: 'Garet Book';
   src: url('../assets/fonts/Garet-Book.woff2') format('woff2');
   font-display: swap;
   font-weight: 400;
-}
-@font-face {
-  font-family: 'Manrope';
-  src: url('../assets/fonts/manrope-cyrillic-wght-normal.woff2') format('woff2');
-  font-display: swap;
-  font-weight: 200 800;
-  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
-}
-@font-face {
-  font-family: 'Manrope';
-  src: url('../assets/fonts/manrope-latin-wght-normal.woff2') format('woff2');
-  font-display: swap;
-  font-weight: 200 800;
-  unicode-range:
-    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
-    U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  /* The ruble sign is shipped in Fontsource's Latin Extended subset. */
-  font-family: 'Manrope';
-  src: url('../assets/fonts/manrope-latin-ext-wght-normal.woff2') format('woff2');
-  font-display: swap;
-  font-weight: 200 800;
-  unicode-range: U+20AD-20C0;
 }
 @font-face {
   font-family: 'Doto Rounded';
@@ -37,8 +13,8 @@
 }
 
 :root {
-  --ui-font: 'Manrope', Arial, sans-serif;
-  --ui-font-display: 'Garet Book', 'Manrope', Arial, sans-serif;
+  --ui-font: 'Garet Book', Arial, sans-serif;
+  --ui-font-display: var(--ui-font);
   --ui-font-numeric: 'Doto Rounded', ui-monospace, Menlo, monospace;
   --ui-canvas: #e8e9e6;
   --ui-surface: #fff;
@@ -73,12 +49,20 @@
 
   --ui-card-title: 550 clamp(21px, 1.7vw, 28px) / 1.17 var(--ui-font);
   --ui-kpi: 500 clamp(31px, 3vw, 46px) / 1.06 var(--ui-font-display);
+  --ui-title-stroke: 0.016em;
   --ui-reading: 600 clamp(38px, 12cqw, 78px) / 1.1 var(--ui-font-numeric);
   --ui-caption: 500 14px/1.4 var(--ui-font);
   --ui-number: 600 17px/1.25 var(--ui-font);
-  --ui-depth-top: #bcebd0;
-  --ui-depth-base: #46d186;
-  --ui-depth-bottom: #409f76;
-  --ui-depth-core: #063a2c;
+  --ui-depth-top: #919299;
+  --ui-depth-base: #414247;
+  --ui-depth-bottom: #595b60;
+  --ui-depth-core: #121316;
   --ui-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256' viewBox='0 0 256 256'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.78' numOctaves='3' seed='19' stitchTiles='stitch'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0' intercept='1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* The licensed Book is a static face. Add a small optical weight only to
+   headings, keeping the original glyph shapes and one consistent typeface. */
+:where(h1, h2, h3) {
+  font-synthesis: none;
+  -webkit-text-stroke: var(--ui-title-stroke) currentColor;
 }

@@ -1,0 +1,128 @@
+.kpi-trend {
+  margin: auto 0 0;
+  padding-top: 12px;
+  min-width: 0;
+}
+
+.kpi-trend-plot {
+  position: relative;
+  height: clamp(40px, 3.2vw, 59px);
+}
+
+.kpi-trend svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.kpi-trend figcaption {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.4em;
+  margin-top: 3px;
+  font: 400 12px/1.35 var(--ui-font);
+  font-variant-numeric: tabular-nums;
+  color: var(--ui-muted);
+  white-space: nowrap;
+}
+
+.kpi-zero-mark {
+  position: absolute;
+  right: 0;
+  padding-left: 2px;
+  transform: translateY(-50%);
+  background: var(--card-surface, var(--ui-surface));
+  color: var(--ui-muted);
+  font: 400 11px/1 var(--ui-font);
+  pointer-events: none;
+}
+
+.kpi-baseline,
+.kpi-profit-line,
+.kpi-bar.is-zero {
+  vector-effect: non-scaling-stroke;
+}
+
+.kpi-baseline {
+  stroke: rgb(37 62 48 / 17%);
+  stroke-width: 1;
+}
+
+.kpi-bar {
+  fill: #b5cebf;
+}
+.kpi-bar.is-selected {
+  fill: var(--ui-accent-ink);
+}
+.kpi-bar.is-loss {
+  fill: #c6a8a2;
+}
+.kpi-bar.is-loss.is-selected {
+  fill: var(--ui-negative);
+}
+.kpi-bar.is-zero {
+  stroke: #a4bbae;
+  stroke-width: 2;
+}
+.kpi-bar.is-zero.is-selected {
+  stroke: var(--ui-accent-ink);
+  stroke-width: 3;
+}
+
+.kpi-profit-line {
+  fill: none;
+  stroke: var(--ui-accent-ink);
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.kpi-wash-top {
+  stop-color: var(--ui-accent);
+  stop-opacity: 0.32;
+}
+.kpi-wash-bottom {
+  stop-color: var(--ui-accent);
+  stop-opacity: 0.02;
+}
+.kpi-profit-bead {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ui-accent-ink);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.kpi-profit-bead.is-loss {
+  background: var(--ui-negative);
+}
+
+@media (max-width: 700px) {
+  .kpi-trend {
+    padding-top: 9px;
+  }
+  .kpi-trend-plot {
+    height: 32px;
+  }
+}
+
+@media (forced-colors: active) {
+  .kpi-bar {
+    fill: CanvasText;
+  }
+  .kpi-bar.is-selected,
+  .kpi-profit-bead {
+    forced-color-adjust: none;
+    fill: Highlight;
+    background: Highlight;
+  }
+  .kpi-profit-line,
+  .kpi-bar.is-zero {
+    stroke: CanvasText;
+  }
+  .kpi-baseline {
+    stroke: GrayText;
+  }
+}

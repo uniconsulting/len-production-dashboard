@@ -127,52 +127,72 @@ function segments(label, buttons, extra = '') {
 }
 const chevron =
   '<svg class="d-chevron" viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true"><path d="m5 6 3 3 3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-function productionTop(ctx, m) {
-  const people = m.m <= 6 ? 'Работа основателей' : 'Работа оператора';
-  const total = sum(m.groupCapacity);
-  const groupLines = groups
-    .map((group, index) => {
-      const load = ratio(m.groupHours[index], m.groupCapacity[index]);
-      return `<li class="d-group-load">
-      <div><span>${group.full}</span><strong>${percent(load)}</strong></div>
-      ${meter(load, 'd-tone-' + index)}
-      <small>${hours(m.groupHours[index])} из ${hours(m.groupCapacity[index])}</small>
-    </li>`;
+// Both charts use the same production month. Machine time and personal time have separate denominators.
+function capacityRing(used, available) {
+  const load = ratio(used, available);
+  const filled = Math.max(0, Math.min(100, load * 100));
+  return `<div class="d-load-ring">
+    <svg viewBox="0 0 120 120" aria-hidden="true">
+      <circle class="d-ring-base" cx="60" cy="60" r="53" />
+      <circle class="d-ring-used" cx="60" cy="60" r="53" pathLength="100" stroke-dasharray="${filled} 100" transform="rotate(-90 60 60)" />
+    </svg>
+    <span><strong>${percent(load)}</strong><small>занято</small></span>
+  </div>`;
+}
+function machineCapacity(ctx, m) {
+  const capacity = sum(m.groupCapacity);
+  const loads = groups.map((g, i) => ratio(m.groupHours[i], m.groupCapacity[i]));
+  const busiest = loads.indexOf(Math.max(...loads));
+  const groupRows = groups
+    .map((group, i) => {
+      const count = ctx.model.printers.filter((p) => p.group === group.key).length;
+      return `<tr class="${i === busiest ? 'd-capacity-peak' : ''}">
+      <th scope="row"><span>${group.label}</span><small>×${num(count)}</small></th>
+      <td>${num(m.groupHours[i], 1)}</td><td>${num(m.groupCapacity[i], 1)}</td>
+      <td><span>${percent(loads[i])}</span></td>
+    </tr>`;
     })
     .join('');
+  return `<section class="bento-card d-card d-resource d-util-card">
+    <div class="d-resource-head"><h2>Загрузка парка</h2><span>${ctx.model.printers.length} машин</span></div>
+    <div class="d-fleet-reading">
+      ${capacityRing(m.printHours, capacity)}
+      <dl class="d-cap-totals"><div><dt>Занято печатью</dt><dd>${hours(m.printHours)}</dd></div><div><dt>Свободно</dt><dd>${hours(Math.max(0, capacity - m.printHours))}</dd></div></dl>
+    </div>
+    <table class="d-capacity-table"><caption class="d-sr-only">Машино-часы в выбранном месяце</caption>
+      <thead><tr><th scope="col">Группа</th><th scope="col">Занято, ч</th><th scope="col">Фонд, ч</th><th scope="col">Загрузка</th></tr></thead>
+      <tbody>${groupRows}</tbody>
+    </table>
+    <p class="d-cap-insight">Самая загруженная группа — ${groups[busiest].label.toLowerCase()}. Резерв <b>${hours(Math.max(0, m.groupCapacity[busiest] - m.groupHours[busiest]))}</b>.</p>
+  </section>`;
+}
+function operatorCapacity(ctx, m) {
+  const founders = m.m <= ctx.model.meta.ownersMonths;
+  const people = founders ? 'Работа основателей' : 'Работа оператора';
+  const available = m.laborCapacity,
+    booked = m.operatorHours;
+  const share = ratio(booked, available);
   const breakdown = [
-    'Параметры и запуск через ЛËН',
+    'Настройки и запуск через ЛËН',
     'Столы и неудачные построения',
     'Приёмка и упаковка',
-    'Дополнительная постобработка',
+    'Дополнительная отделка',
   ];
-  const workingRows = [
-    ['Работа по заказам', m.operatorHours],
-    ['Обходы фермы', m.roundsHours],
-    ['Резерв времени на заказы', Math.max(0, m.laborCapacity - m.operatorHours)],
-    ['Подготовка у подрядчика', m.externalHours],
-  ]
-    .map(([name, value]) => `<div><dt>${name}</dt><dd>${hours(value)}</dd></div>`)
-    .join('');
-  return `<div class="d-top-grid">
-    <section class="bento-card d-card d-util-card">
-      <h2>Загрузка парка</h2>
-      <div class="d-reading"><strong class="d-measure">${percent(ratio(m.printHours, total))}</strong>
-        <span>${num(m.printHours, 1)} из ${num(total, 1)} машино-часов</span></div>
-      <ul class="d-group-grid">${groupLines}</ul>
-    </section>
-    <section class="bento-card d-card d-work-card">
-      <h2>${people}</h2>
-      <div class="d-reading"><strong class="d-measure">${hours(m.operatorHours + m.roundsHours)}</strong>
-        <span>на площадке за месяц</span></div>
-      <dl class="d-working-rows">${workingRows}</dl>
-      <details class="d-disclosure"><summary>Операции по заказам ${chevron}</summary>
-        <dl class="d-breakdown">${breakdown.map((name, i) => `<div><dt>${name}</dt><dd>${hours(m.labor[i])}</dd></div>`).join('')}</dl>
-        <p class="d-note">Норматив отделки учитывает треть партий. Фонд на заказы — ${hours(m.laborCapacity)}. Время операций уточняется по замерам.</p>
-      </details>
-    </section></div>`;
+  return `<section class="bento-card d-card d-resource d-work-card">
+    <div class="d-resource-head"><h2>${people}</h2><span>${founders ? 'Двое в офисе' : 'График 6/1'}</span></div>
+    <div class="d-work-reading"><strong>${hours(booked)}</strong><span>по заказам из ${hours(available)}</span></div>
+    <div class="d-work-plot" aria-hidden="true"><i style="width:${Math.min(100, Math.max(0, share * 100))}%"></i></div>
+    <div class="d-work-labels"><span><i></i>${percent(share)} занято</span><span>Свободно <b>${hours(Math.max(0, available - booked))}</b></span></div>
+    <dl class="d-work-locations">
+      <div><dt>Всего на площадке</dt><dd>${hours(booked + m.roundsHours)}</dd><small>включая ${hours(m.roundsHours)} на обходы</small></div>
+      <div><dt>У подрядчика</dt><dd>${hours(m.externalHours)}</dd><small>внешняя подготовка</small></div>
+    </dl>
+    <details class="d-disclosure"><summary>Состав работы по заказам ${chevron}</summary>
+      <dl class="d-breakdown">${breakdown.map((name, i) => `<div><dt>${name}</dt><dd>${hours(m.labor[i])}</dd></div>`).join('')}</dl>
+      <p class="d-note">В расчёте отделка требуется трети принятых партий. Обходы покрываются резервом рабочего графика. Время подготовки у подрядчика учитывается отдельно.</p>
+    </details>
+  </section>`;
 }
-
 function fleetRows(ctx, m, machines) {
   return machines
     .map(({ printer, i }) => {
@@ -311,8 +331,10 @@ export function renderProduction(ctx) {
     (row) => days(row.date) === 28 && row.profileOrders.every((count, i) => count >= c.mix[i] - 0.01),
   );
   const highLoad = shortMonth ? ratio(shortMonth.groupHours[2], shortMonth.groupCapacity[2]) : 0;
+  const alreadyShown =
+    days(m.date) === 28 && Math.abs(ratio(m.groupHours[2], m.groupCapacity[2]) - highLoad) < 0.0001;
   const warning =
-    highLoad >= 0.9
+    highLoad >= 0.9 && !alreadyShown
       ? '<aside class="d-cap-note"><div><strong>Резерв серийной группы в феврале</strong><p>За 28 дней двум принтерам потребуется ' +
         hours(shortMonth.groupHours[2]) +
         ' из ' +
@@ -323,7 +345,10 @@ export function renderProduction(ctx) {
       : '';
   return (
     '<div class="detail-view" data-detail-view="production">' +
-    productionTop(ctx, m) +
+    '<div class="d-top-grid">' +
+    machineCapacity(ctx, m) +
+    operatorCapacity(ctx, m) +
+    '</div>' +
     warning +
     fleet(ctx, m) +
     batches(ctx, m) +
@@ -351,7 +376,9 @@ function policySelect(ctx, c) {
       Object.entries(policies).map(([key, v]) => choice('policy', key, v.label, state.policy === key)),
       'd-policy-filter',
     )}
-    <div class="d-policy-result"><strong>${percent(ratio(distributed, profit))}</strong><span>чистой прибыли распределено за 5 лет</span></div>
+    <div class="d-policy-result"><strong>${percent(ratio(distributed, profit))}</strong><span>прибыли распределяется за 5 лет</span></div>
+    <div class="d-policy-bar" aria-hidden="true"><i style="width:${Math.min(100, Math.max(0, 100 * ratio(distributed, profit)))}%"></i></div>
+    <dl class="d-policy-amounts"><div><dt>Участникам, до налога</dt><dd>${rub(distributed)}</dd></div><div><dt>Остаётся в ООО</dt><dd>${rub(profit - distributed)}</dd></div></dl>
     <p>${policies[state.policy].detail}</p>
     <details class="d-disclosure"><summary>Условия выплаты ${chevron}</summary>
       <p class="d-note">Выплаты рассчитаны после погашения займа ${rub(ctx.model.meta.loanAmount)} и пополнения резервов. Даты требуют решения участников.</p>
@@ -423,12 +450,21 @@ function payoutChart(c, m, role, policy) {
         xy(y(cash)) +
         '" class="d-chart-deposit"/>'
       : '';
+  const payback = c.policies[policy].payback[role.idx];
+  const returnPoint =
+    cash > 0 && Number.isInteger(payback) && payback >= 1 && payback <= values.length - 1
+      ? `<circle cx="${xy(x(payback))}" cy="${xy(y(values[payback]))}" r="5.8" class="d-chart-return"><title>Возврат вклада · ${monthName(c.months[payback - 1].date)}</title></circle>`
+      : '';
+  const paybackCaption = returnPoint
+    ? `<span class="d-return-key"><i></i>Возврат · ${monthName(c.months[payback - 1].date, true)}</span>`
+    : '';
   const pt = values[m.m];
   return (
     '<section class="bento-card d-card d-cash-chart"><div class="d-head"><div><h2>Накопленные выплаты</h2><p class="d-note">' +
     esc(role.full) +
     ' · после расчётного налога</p></div><div class="d-chart-key"><span><i></i>Выплаты</span>' +
     (cash > 0 ? '<span><i class="d-dashed"></i>Денежный вклад</span>' : '') +
+    paybackCaption +
     '</div></div>' +
     '<div class="d-chart-wrap"><div class="d-chart-axis" aria-hidden="true"><span>' +
     axisLabel(top) +
@@ -442,7 +478,7 @@ function payoutChart(c, m, role, policy) {
     w +
     ' ' +
     h +
-    '" preserveAspectRatio="none">' +
+    '" preserveAspectRatio="none"><defs><linearGradient id="dividend-wash" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--ui-accent)" stop-opacity=".28"/><stop offset="1" stop-color="var(--ui-accent)" stop-opacity=".03"/></linearGradient></defs>' +
     grid +
     depositLine +
     '<path d="' +
@@ -451,7 +487,7 @@ function payoutChart(c, m, role, policy) {
     bottom +
     ' H' +
     left +
-    ' Z" class="d-chart-area"/><path d="' +
+    ' Z" class="d-chart-area" fill="url(#dividend-wash)"/><path d="' +
     path +
     '" class="d-chart-series"/><line x1="' +
     xy(x(m.m)) +
@@ -461,7 +497,9 @@ function payoutChart(c, m, role, policy) {
     yTop +
     '" y2="' +
     bottom +
-    '" class="d-chart-selected"/><circle cx="' +
+    '" class="d-chart-selected"/>' +
+    returnPoint +
+    '<circle cx="' +
     xy(x(m.m)) +
     '" cy="' +
     xy(y(pt)) +
